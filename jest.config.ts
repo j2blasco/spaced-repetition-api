@@ -10,7 +10,8 @@ const config: JestConfigWithTsJest = {
   },
   testMatch: [
     '**/*.test.ts',
-    '!**/*.utils.test.ts'
+    '!**/*.utils.test.ts',
+    '!**/*.generic.test.ts'
   ],
   testPathIgnorePatterns: ['./dist']
 }
