@@ -1,9 +1,9 @@
 import type { Boundaries } from '@j2blasco/ts-boundaries';
 
 const boundaries: Boundaries = {
-  name: 'root',
-  internal: [],
-  external: [],
+  name: 'rest',
+  internal: ['environment', 'common'],
+  external: ['express', 'cors'],
 };
 
 export default boundaries;

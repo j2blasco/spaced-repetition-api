@@ -1,51 +1,24 @@
 {
-  "name": "@j2blasco/ts-package-template",
-  "version": "0.0.1",
-  "description": "Typescript Package Template",
-  "author": "j2blasco",
-  "license": "MIT",
-  "type": "module",
-  "keywords": [
-    "typescript",
-    "package",
-    "template"
-  ],
-  "publishConfig": {
-    "access": "public"
-  },
-  "main": "./dist/cjs/index.js",
-  "module": "./dist/esm/index.js",
-  "types": "./types/index.d.ts",
-  "repository": {
-    "type": "git",
-    "url": ""
-  },
-  "exports": {
-    ".": {
-      "import": "./dist/esm/index.js",
-      "require": "./dist/cjs/index.js",
-      "types": "./types/index.d.ts"
-    }
-  },
-  "files": [
-    "dist",
-    "types",
-    "README.md",
-    "LICENSE"
-  ],
   "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "tsx --watch src/index.ts",
     "boundaries": "ts-boundaries",
-    "build:cjs": "tsc -p tsconfig.cjs.json",
-    "build:esm": "tsc -p tsconfig.esm.json",
-    "build": "npm run build:cjs && npm run build:esm",
     "lint:fix": "npm run boundaries && eslint src --ext .ts",
     "lint": "npm run boundaries && eslint src --ext .ts",
-    "prepublishOnly": "npm run build",
     "script": "tsx --tsconfig ./scripts/tsconfig.json",
     "test": "jest"
   },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^5.1.0",
+    "module-alias": "^2.2.3",
+    "rxjs": "^7.8.2"
+  },
   "devDependencies": {
+    "@types/cors": "^2.8.19",
     "@j2blasco/ts-boundaries": "^0.1.2",
+    "@types/express": "^5.0.3",
     "@types/jest": "^29.5.14",
     "@typescript-eslint/eslint-plugin": "^8.35.0",
     "@typescript-eslint/parser": "^8.35.0",
