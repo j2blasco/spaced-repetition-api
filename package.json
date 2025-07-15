@@ -10,14 +10,15 @@
     "test": "jest"
   },
   "dependencies": {
+    "@j2blasco/ts-crud": "^0.1.1",
     "cors": "^2.8.5",
     "express": "^5.1.0",
     "module-alias": "^2.2.3",
     "rxjs": "^7.8.2"
   },
   "devDependencies": {
-    "@types/cors": "^2.8.19",
     "@j2blasco/ts-boundaries": "^0.1.2",
+    "@types/cors": "^2.8.19",
     "@types/express": "^5.0.3",
     "@types/jest": "^29.5.14",
     "@typescript-eslint/eslint-plugin": "^8.35.0",

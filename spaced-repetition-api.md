@@ -9,7 +9,7 @@ This document describes the REST API architecture for a spaced repetition servic
 ### 1. User
 - Represents a registered user of the system
 - Has authentication credentials and profile information
-- Can own multiple decks and study sessions
+- Can own multiple decks
 
 ### 2. Deck
 - A collection of cards organized by topic or subject
@@ -27,15 +27,10 @@ This document describes the REST API architecture for a spaced repetition servic
 - Contains fields that map to card templates
 - Allows for flexible card generation from structured data
 
-### 5. Study Session
-- A learning session where users review cards
-- Tracks performance metrics and timing
-- Updates card scheduling based on user responses
-
-### 6. Review
-- Individual card review within a study session
-- Records user response (again, hard, good, easy)
+### 5. Review
+- Records user response to a card (again, hard, good, easy)
 - Updates card's next review date using spaced repetition algorithm
+- Tracks performance metrics and timing
 
 ## Data Models
 
@@ -114,27 +109,12 @@ This document describes the REST API architecture for a spaced repetition servic
 }
 ```
 
-### Study Session
-```json
-{
-  "id": "string (UUID)",
-  "userId": "string (UUID)",
-  "deckId": "string (UUID)",
-  "startTime": "datetime",
-  "endTime": "datetime",
-  "cardsStudied": "number",
-  "newCards": "number",
-  "reviewCards": "number",
-  "averageResponseTime": "number (seconds)"
-}
-```
-
 ### Review
 ```json
 {
   "id": "string (UUID)",
-  "sessionId": "string (UUID)",
   "cardId": "string (UUID)",
+  "userId": "string (UUID)",
   "response": "again|hard|good|easy",
   "responseTime": "number (seconds)",
   "reviewedAt": "datetime",
@@ -151,15 +131,6 @@ POST   /api/auth/register
 POST   /api/auth/login
 POST   /api/auth/logout
 POST   /api/auth/refresh
-GET    /api/auth/me
-```
-
-### Users
-```
-GET    /api/users/profile
-PUT    /api/users/profile
-PUT    /api/users/preferences
-GET    /api/users/stats
 ```
 
 ### Decks
@@ -169,7 +140,6 @@ POST   /api/decks                    # Create new deck
 GET    /api/decks/{id}               # Get deck details
 PUT    /api/decks/{id}               # Update deck
 DELETE /api/decks/{id}               # Delete deck
-GET    /api/decks/{id}/stats         # Get deck statistics
 GET    /api/decks/public             # Browse public decks
 POST   /api/decks/{id}/clone         # Clone a public deck
 ```
@@ -188,37 +158,18 @@ DELETE /api/notes/{id}               # Delete note
 GET    /api/decks/{deckId}/cards     # List cards in deck
 GET    /api/cards/{id}               # Get card details
 PUT    /api/cards/{id}               # Update card (manual scheduling)
-PUT    /api/cards/{id}/algorithm     # Change card's scheduling algorithm
 DELETE /api/cards/{id}               # Delete card
 GET    /api/cards/due                # Get cards due for review
-POST   /api/cards/migrate-algorithm  # Bulk migrate cards to different algorithm
-```
-
-### Study Sessions
-```
-POST   /api/study/start              # Start new study session
-GET    /api/study/next               # Get next card to review
-POST   /api/study/review             # Submit card review
-POST   /api/study/end                # End study session
-GET    /api/study/sessions           # List study sessions
-GET    /api/study/sessions/{id}      # Get session details
-```
-
-### Statistics
-```
-GET    /api/stats/overview           # Overall user statistics
-GET    /api/stats/decks/{id}         # Deck-specific statistics
-GET    /api/stats/progress           # Learning progress over time
-GET    /api/stats/heatmap            # Study activity heatmap
+POST   /api/cards/{id}/review        # Submit card review (updates scheduling)
 ```
 
 ## Spaced Repetition Algorithm
 
-The API supports multiple spaced repetition algorithms to accommodate different learning preferences and research advancements:
+The API supports multiple spaced repetition algorithms internally, with SM-2 as the default. While the system is designed to handle different algorithms (SM-2, SM-4, FSRS), algorithm selection and switching are not exposed through API endpoints in the current version.
 
-### Supported Algorithms
+### Currently Supported Algorithms
 
-#### SM-2 (SuperMemo 2)
+#### SM-2 (SuperMemo 2) - Default
 The classic algorithm used by Anki and many other SRS systems.
 
 **Parameters:**
@@ -232,34 +183,11 @@ The classic algorithm used by Anki and many other SRS systems.
 3. Failed reviews reset to learning phase
 4. Ease factor adjusts based on response difficulty
 
-#### SM-4 (SuperMemo 4)
-An improved version with better handling of difficult cards and more sophisticated ease factor adjustments.
-
-**Additional Parameters:**
-- **A-Factor**: Advanced difficulty factor
-- **Optimal Interval**: Calculated optimal review interval
-- **Used Interval**: Actually used interval (may differ from optimal)
-
-#### FSRS (Free Spaced Repetition Scheduler)
-A modern algorithm based on extensive data analysis and machine learning principles.
-
-**Parameters:**
-- **Stability**: How well the memory is consolidated
-- **Difficulty**: Inherent difficulty of the card
-- **Retrievability**: Current probability of successful recall
-- **Last Review**: Timestamp of last review
-
-### Response Grades (Universal)
+### Response Grades
 - **Again (1)**: Complete failure, restart learning
 - **Hard (2)**: Difficult recall, reduce ease factor
 - **Good (3)**: Correct with effort, normal progression
 - **Easy (4)**: Perfect recall, bonus interval
-
-### Algorithm Selection
-- **Default**: SM-2 for new users (compatibility with Anki)
-- **Per-Deck**: Users can choose algorithm when creating decks
-- **Per-Card**: Advanced users can override algorithm for specific cards
-- **Migration**: Cards can be migrated between algorithms with parameter conversion
 
 ## Error Handling
 
