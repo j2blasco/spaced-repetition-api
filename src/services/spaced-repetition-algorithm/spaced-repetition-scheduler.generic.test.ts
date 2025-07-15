@@ -95,12 +95,12 @@ export function testSpacedRepetitionScheduler(
           calculateInterval(baseRequest.currentScheduling),
         );
         expect(response.wasSuccessful).toBe(true);
-        
+
         // For most algorithms, easy recall should eventually lead to increasing intervals
         // Test this by doing multiple easy reviews
         let currentScheduling = response.newScheduling;
         let hasIncreased = false;
-        
+
         for (let i = 0; i < 3; i++) {
           const nextRequest: RescheduleRequest = {
             currentScheduling,
@@ -110,9 +110,9 @@ export function testSpacedRepetitionScheduler(
               reviewedAt: new Date(),
             },
           };
-          
+
           const nextResponse = scheduler.reschedule(nextRequest);
-          
+
           if (
             calculateInterval(nextResponse.newScheduling) >
             calculateInterval(currentScheduling)
@@ -120,10 +120,10 @@ export function testSpacedRepetitionScheduler(
             hasIncreased = true;
             break;
           }
-          
+
           currentScheduling = nextResponse.newScheduling;
         }
-        
+
         // After multiple easy reviews, the interval should have increased at some point
         expect(hasIncreased).toBe(true);
       });
