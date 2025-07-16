@@ -2,8 +2,8 @@ import {
   AlgorithmType,
   SpacedRepetitionAlgorithmProvider,
   SpacedRepetitionScheduler,
-} from '../spaced-repetition-algorithm.interface';
-import { SM2Scheduler } from '../sm2/sm2-scheduler';
+} from '../core/spaced-repetition-algorithm.interface';
+import { SM2Scheduler } from './sm2/sm2-scheduler';
 
 /**
  * Default implementation of SpacedRepetitionAlgorithmProvider

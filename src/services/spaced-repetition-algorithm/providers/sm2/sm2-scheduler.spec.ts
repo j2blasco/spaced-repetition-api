@@ -1,5 +1,5 @@
-import { AlgorithmType } from '../spaced-repetition-algorithm.interface';
-import { testSpacedRepetitionScheduler } from '../spaced-repetition-scheduler.generic.test';
+import { AlgorithmType } from '../../core/spaced-repetition-algorithm.interface';
+import { testSpacedRepetitionScheduler } from '../../core/spaced-repetition-scheduler.generic.test';
 import { SM2Scheduler } from './sm2-scheduler';
 
 describe('SM2Scheduler', () => {

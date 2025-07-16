@@ -3,21 +3,21 @@ import {
   StudySession,
   ReviewCardRequest,
   StudySessionResult,
-} from './spaced-repetition.service.interface.js';
+} from './spaced-repetition.service.interface';
 import {
   SpacedRepetitionAlgorithmProvider,
   AlgorithmType,
   RecallLevel,
-} from '../../services/spaced-repetition-algorithm/spaced-repetition-algorithm.interface';
-import { UserId } from '../user/user.interface.js';
+} from '../../services/spaced-repetition-algorithm/core/spaced-repetition-algorithm.interface';
+import { UserId } from '../user/user.interface';
 import {
   CardRepository,
   CreateCardRequest,
   Card,
   CardId,
-} from './card/card.interface.js';
-import { DeckRepository, DeckId } from './deck/deck.interface.js';
-import { ReviewRepository, Review } from './review/review.interface.js';
+} from './card/card.interface';
+import { DeckRepository, DeckId } from './deck/deck.interface';
+import { ReviewRepository, Review } from './review/review.interface';
 
 /**
  * Implementation of SpacedRepetitionService

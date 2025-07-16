@@ -13,7 +13,7 @@ import { NoteId } from '../note/note.interface.js';
 import {
   AlgorithmType,
   CardSchedulingData,
-} from 'src/services/spaced-repetition-algorithm/index.js';
+} from 'src/services/spaced-repetition-algorithm/core/spaced-repetition-algorithm.interface.js';
 
 /**
  * In-memory implementation of CardRepository for testing purposes

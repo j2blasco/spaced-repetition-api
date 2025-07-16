@@ -23,7 +23,7 @@ describe('Complete Spaced Repetition System Integration', () => {
     noteRepository = new InMemoryNoteRepository();
     cardRepository = new InMemoryCardRepository();
     reviewRepository = new InMemoryReviewRepository();
-    
+
     algorithmProvider = new DefaultSpacedRepetitionAlgorithmProvider();
     spacedRepetitionService = new DefaultSpacedRepetitionService(
       cardRepository,

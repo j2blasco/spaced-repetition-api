@@ -4,7 +4,7 @@ import {
   SpacedRepetitionAlgorithmProvider,
   SpacedRepetitionScheduler,
 } from './spaced-repetition-algorithm.interface';
-import { calculateInterval } from './scheduling-utils';
+import { calculateInterval } from '../providers/scheduling-utils';
 
 /**
  * Generic test suite for SpacedRepetitionAlgorithmProvider implementations

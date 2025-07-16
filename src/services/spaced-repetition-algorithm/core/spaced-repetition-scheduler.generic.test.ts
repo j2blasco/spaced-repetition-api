@@ -5,7 +5,7 @@ import {
   RescheduleRequest,
   SpacedRepetitionScheduler,
 } from './spaced-repetition-algorithm.interface';
-import { calculateInterval, calculateIntervalChange } from './scheduling-utils';
+import { calculateInterval, calculateIntervalChange } from '../providers/scheduling-utils';
 
 /**
  * Generic test suite for SpacedRepetitionScheduler implementations

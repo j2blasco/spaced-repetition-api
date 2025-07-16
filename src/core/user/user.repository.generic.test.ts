@@ -165,7 +165,7 @@ export function testUserRepository(
         });
 
         // Small delay to ensure updatedAt is different
-        await new Promise((resolve) => setTimeout(resolve, 1));
+        await new Promise((resolve) => setTimeout(resolve, 10));
 
         const updateRequest: UpdateUserRequest = {
           username: 'updateduser',

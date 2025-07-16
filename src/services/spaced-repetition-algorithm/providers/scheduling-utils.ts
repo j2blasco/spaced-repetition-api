@@ -1,4 +1,4 @@
-import { CardSchedulingData } from './spaced-repetition-algorithm.interface';
+import { CardSchedulingData } from '../core/spaced-repetition-algorithm.interface';
 
 /**
  * Utility functions for working with spaced repetition scheduling

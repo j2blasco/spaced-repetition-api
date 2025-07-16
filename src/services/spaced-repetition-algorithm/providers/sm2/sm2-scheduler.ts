@@ -1,11 +1,11 @@
 import {
+  SpacedRepetitionScheduler,
   AlgorithmType,
   CardSchedulingData,
-  RecallLevel,
   RescheduleRequest,
   RescheduleResponse,
-  SpacedRepetitionScheduler,
-} from '../spaced-repetition-algorithm.interface';
+  RecallLevel,
+} from '../../core/spaced-repetition-algorithm.interface';
 import { updateSchedulingWithInterval } from '../scheduling-utils';
 import { SM2AlgorithmData } from './sm2-algorithm-data.interface';
 
@@ -77,7 +77,7 @@ export class SM2Scheduler
     data: CardSchedulingData<SM2AlgorithmData>,
   ): boolean {
     const algorithmData = data.algorithmData;
-    
+
     return (
       typeof algorithmData === 'object' &&
       algorithmData !== null &&
