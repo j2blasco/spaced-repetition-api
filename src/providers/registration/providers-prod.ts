@@ -10,4 +10,3 @@ export function registerProviders() {
     new NoSqlDatabaseTesting(),
   );
 }
-
