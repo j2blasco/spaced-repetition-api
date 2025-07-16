@@ -6,6 +6,9 @@ const config: JestConfigWithTsJest = {
   testEnvironment: 'node',
   testMatch: ['**/*.test.ts', '!**/*.utils.test.ts', '!**/*.generic.test.ts'],
   testPathIgnorePatterns: ['./dist'],
+  moduleNameMapper: {
+    '^src/(.*)$': '<rootDir>/src/$1',
+  },
 };
 
 export default config;

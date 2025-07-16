@@ -1,5 +1,3 @@
-2. Register no-sql-db
-
 3. Rewrite the repositories to use no-sql-db via injection
 
 4. Add boundaries so that no-sql-db is only used by repos.
