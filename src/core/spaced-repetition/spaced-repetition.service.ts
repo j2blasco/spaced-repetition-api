@@ -5,19 +5,19 @@ import {
   StudySessionResult,
 } from './spaced-repetition.service.interface.js';
 import {
-  Card,
-  CreateCardRequest,
-  CardId,
-  CardRepository,
-} from '../card/card.interface.js';
-import { Review, ReviewRepository } from '../review/review.interface.js';
-import { UserId } from '../user/user.interface';
-import { DeckId, DeckRepository } from '../deck/deck.interface';
-import {
   SpacedRepetitionAlgorithmProvider,
   AlgorithmType,
   RecallLevel,
 } from '../../services/spaced-repetition-algorithm/spaced-repetition-algorithm.interface';
+import { UserId } from '../user/user.interface.js';
+import {
+  CardRepository,
+  CreateCardRequest,
+  Card,
+  CardId,
+} from './card/card.interface.js';
+import { DeckRepository, DeckId } from './deck/deck.interface.js';
+import { ReviewRepository, Review } from './review/review.interface.js';
 
 /**
  * Implementation of SpacedRepetitionService
@@ -33,7 +33,7 @@ export class DefaultSpacedRepetitionService implements SpacedRepetitionService {
   async createCard(request: CreateCardRequest): Promise<Card> {
     const algorithm = request.algorithm || 'sm2';
     const _algorithmType = this.mapAlgorithmString(algorithm);
-    
+
     const cardWithScheduling: CreateCardRequest = {
       ...request,
       algorithm,
@@ -51,7 +51,7 @@ export class DefaultSpacedRepetitionService implements SpacedRepetitionService {
     };
 
     const allDueCards = await this.cardRepository.findDueCards(dueCardsQuery);
-    
+
     // Separate new cards from due cards
     const newCards: Card[] = [];
     const dueCards: Card[] = [];
@@ -86,7 +86,7 @@ export class DefaultSpacedRepetitionService implements SpacedRepetitionService {
 
     // Map API response to algorithm response
     const recallLevel = this.mapResponseToRecallLevel(request.response);
-    
+
     // Get the appropriate scheduler
     const algorithmData = card.scheduling.algorithmData as {
       algorithm?: string;

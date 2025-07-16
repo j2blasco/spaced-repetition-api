@@ -1,11 +1,11 @@
-import { testSpacedRepetitionUserStory } from './tests/spaced-repetition-user-story.generic.test';
-import { DefaultSpacedRepetitionService } from './spaced-repetition.service';
-import { DefaultSpacedRepetitionAlgorithmProvider } from '../../services/spaced-repetition-algorithm/providers/default-algorithm-provider';
-import { InMemoryUserRepository } from '../user/user.repository.memory';
-import { InMemoryCardRepository } from './card/card.repository.memory';
-import { InMemoryDeckRepository } from './deck/deck.repository.memory';
-import { InMemoryNoteRepository } from './note/note.repository.memory';
-import { InMemoryReviewRepository } from './review/review.repository.memory';
+import { testSpacedRepetitionUserStory } from './spaced-repetition-user-story.generic.test';
+import { InMemoryUserRepository } from '../../user/user.repository.memory';
+import { DefaultSpacedRepetitionService } from '../spaced-repetition.service';
+import { DefaultSpacedRepetitionAlgorithmProvider } from '../../../services/spaced-repetition-algorithm/providers/default-algorithm-provider';
+import { InMemoryCardRepository } from '../card/card.repository.memory';
+import { InMemoryDeckRepository } from '../deck/deck.repository.memory';
+import { InMemoryNoteRepository } from '../note/note.repository.memory';
+import { InMemoryReviewRepository } from '../review/review.repository.memory';
 
 describe('Complete Spaced Repetition System Integration', () => {
   let userRepository: InMemoryUserRepository;
@@ -23,7 +23,7 @@ describe('Complete Spaced Repetition System Integration', () => {
     noteRepository = new InMemoryNoteRepository();
     cardRepository = new InMemoryCardRepository();
     reviewRepository = new InMemoryReviewRepository();
-
+    
     algorithmProvider = new DefaultSpacedRepetitionAlgorithmProvider();
     spacedRepetitionService = new DefaultSpacedRepetitionService(
       cardRepository,
