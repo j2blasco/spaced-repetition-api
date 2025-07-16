@@ -1,4 +1,4 @@
-import { UserId } from '../user/user.interface.js';
+import { UserId } from 'src/core/user/user.interface';
 
 export interface DeckId {
   readonly value: string;

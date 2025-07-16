@@ -1,7 +1,7 @@
-import { Card, CardId, CreateCardRequest } from '../card/card.interface.js';
-import { Review } from '../review/review.interface.js';
-import { UserId } from '../user/user.interface.js';
-import { DeckId } from '../deck/deck.interface.js';
+import { UserId } from '../user/user.interface';
+import { CardId, Card, CreateCardRequest } from './card/card.interface';
+import { DeckId } from './deck/deck.interface';
+import { Review } from './review/review.interface';
 
 export interface StudySession {
   readonly userId: UserId;

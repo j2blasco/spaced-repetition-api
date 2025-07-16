@@ -1,6 +1,6 @@
+import { CardSchedulingData } from 'src/services/spaced-repetition-algorithm/spaced-repetition-algorithm.interface.js';
 import { DeckId } from '../deck/deck.interface.js';
 import { NoteId } from '../note/note.interface.js';
-import { CardSchedulingData } from '../../services/spaced-repetition-algorithm/spaced-repetition-algorithm.interface.js';
 
 export interface CardId {
   readonly value: string;

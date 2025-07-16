@@ -1,5 +1,5 @@
-import { CardId } from '../card/card.interface.js';
-import { UserId } from '../user/user.interface.js';
+import { UserId } from 'src/core/user/user.interface';
+import { CardId } from '../card/card.interface';
 
 export interface ReviewId {
   readonly value: string;
