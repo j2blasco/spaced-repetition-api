@@ -1,3 +1,5 @@
+import { JsonObject } from '@j2blasco/ts-crud/types/utils/json-type';
+
 export enum RecallLevel {
   HARD = 'hard',
   MEDIUM = 'medium',
@@ -10,33 +12,34 @@ export enum AlgorithmType {
   FSRS = 'fsrs',
 }
 
-export interface CardSchedulingData<TAlgorithmData = unknown> {
+export type CardSchedulingData<TAlgorithmData = unknown> = {
+  algorithmType: AlgorithmType;
   nextReviewDate: Date;
   lastReviewDate?: Date;
   algorithmData: TAlgorithmData; // algorithm-specific parameters
-}
+};
 
-export interface ReviewResult {
+export type ReviewResult = {
   recallLevel: RecallLevel;
   responseTime?: number; // in seconds
   reviewedAt: Date;
-}
+};
 
-export interface RescheduleRequest<TAlgorithmData = unknown> {
+export type RescheduleRequest<TAlgorithmData = unknown> = {
   currentScheduling: CardSchedulingData<TAlgorithmData>;
   reviewResult: ReviewResult;
-}
+};
 
-export interface RescheduleResponse<TAlgorithmData = unknown> {
+export type RescheduleResponse<TAlgorithmData = unknown> = {
   newScheduling: CardSchedulingData<TAlgorithmData>;
   wasSuccessful: boolean;
-}
+};
 
 /**
  * Interface for individual algorithm schedulers
  * Each algorithm (SM2, SM4, FSRS) implements this interface
  */
-export interface SpacedRepetitionScheduler<TAlgorithmData = unknown> {
+export interface ISpacedRepetitionScheduler<TAlgorithmData = unknown> {
   /**
    * The algorithm type this scheduler implements
    */
@@ -55,6 +58,18 @@ export interface SpacedRepetitionScheduler<TAlgorithmData = unknown> {
   initializeCard(): CardSchedulingData<TAlgorithmData>;
 
   /**
+   * Serialize scheduling data to JSON for storage
+   */
+  serializeSchedulingData(data: CardSchedulingData<TAlgorithmData>): JsonObject;
+
+  /**
+   * Deserialize scheduling data from JSON storage
+   */
+  deserializeSchedulingData(
+    data: JsonObject,
+  ): CardSchedulingData<TAlgorithmData>;
+
+  /**
    * Validate that the scheduling data is compatible with this algorithm
    */
   isCompatibleSchedulingData(data: CardSchedulingData<TAlgorithmData>): boolean;
@@ -67,33 +82,4 @@ export interface SpacedRepetitionScheduler<TAlgorithmData = unknown> {
     data: CardSchedulingData<unknown>,
     sourceAlgorithm: AlgorithmType,
   ): CardSchedulingData<TAlgorithmData> | null;
-}
-
-/**
- * Provider interface for managing multiple spaced repetition algorithms
- */
-export interface SpacedRepetitionAlgorithmProvider {
-  /**
-   * Get a scheduler for a specific algorithm type
-   */
-  getScheduler<TAlgorithmData = unknown>(
-    algorithmType: AlgorithmType,
-  ): SpacedRepetitionScheduler<TAlgorithmData>;
-
-  /**
-   * Get all supported algorithm types
-   */
-  getSupportedAlgorithms(): AlgorithmType[];
-
-  /**
-   * Check if an algorithm is supported
-   */
-  isAlgorithmSupported(algorithmType: AlgorithmType): boolean;
-
-  /**
-   * Register a new scheduler implementation
-   */
-  registerScheduler<TAlgorithmData = unknown>(
-    scheduler: SpacedRepetitionScheduler<TAlgorithmData>,
-  ): void;
 }

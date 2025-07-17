@@ -15,7 +15,7 @@ export class InMemoryNoteRepository implements NoteRepository {
   private notes: Map<string, Note> = new Map();
 
   async create(request: CreateNoteRequest): Promise<Note> {
-    const id: NoteId = { value: randomUUID() };
+    const id: NoteId = randomUUID();
     const now = new Date();
 
     const note: Note = {
@@ -27,17 +27,17 @@ export class InMemoryNoteRepository implements NoteRepository {
       updatedAt: now,
     };
 
-    this.notes.set(id.value, note);
+    this.notes.set(id, note);
     return note;
   }
 
   async findById(id: NoteId): Promise<Note | null> {
-    return this.notes.get(id.value) || null;
+    return this.notes.get(id) || null;
   }
 
   async findByDeckId(deckId: DeckId): Promise<readonly Note[]> {
     return Array.from(this.notes.values()).filter(
-      (note) => note.deckId.value === deckId.value,
+      (note) => note.deckId === deckId,
     );
   }
 

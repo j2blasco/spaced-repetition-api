@@ -1,5 +1,5 @@
 import {
-  SpacedRepetitionScheduler,
+  ISpacedRepetitionScheduler,
   AlgorithmType,
   CardSchedulingData,
   RescheduleRequest,
@@ -8,13 +8,14 @@ import {
 } from '../../core/spaced-repetition-algorithm.interface';
 import { updateSchedulingWithInterval } from '../scheduling-utils';
 import { SM2AlgorithmData } from './sm2-algorithm-data.interface';
+import { JsonObject } from '@j2blasco/ts-crud/types/utils/json-type';
 
 /**
  * SuperMemo 2 (SM-2) algorithm implementation
  * Maps our RecallLevel enum to SuperMemo grades and implements the classic SM-2 algorithm
  */
 export class SM2Scheduler
-  implements SpacedRepetitionScheduler<SM2AlgorithmData>
+  implements ISpacedRepetitionScheduler<SM2AlgorithmData>
 {
   readonly algorithmType = AlgorithmType.SM2;
 
@@ -26,10 +27,52 @@ export class SM2Scheduler
     const nextReviewDate = new Date(now.getTime() + 24 * 60 * 60 * 1000); // 1 day
 
     return {
+      algorithmType: this.algorithmType,
       nextReviewDate,
       algorithmData: {
         efactor: 2.5, // Default ease factor
         repetition: 0, // New card
+      },
+    };
+  }
+
+  /**
+   * Serialize scheduling data to JSON for storage
+   */
+  serializeSchedulingData(
+    data: CardSchedulingData<SM2AlgorithmData>,
+  ): JsonObject {
+    return {
+      algorithmType: data.algorithmType,
+      nextReviewDate: data.nextReviewDate.toISOString(),
+      lastReviewDate: data.lastReviewDate?.toISOString() || null,
+      algorithmData: {
+        efactor: data.algorithmData.efactor,
+        repetition: data.algorithmData.repetition,
+      },
+    };
+  }
+
+  /**
+   * Deserialize scheduling data from JSON storage
+   */
+  deserializeSchedulingData(
+    data: JsonObject,
+  ): CardSchedulingData<SM2AlgorithmData> {
+    const algorithmData = data.algorithmData as {
+      efactor: number;
+      repetition: number;
+    };
+
+    return {
+      algorithmType: data.algorithmType as AlgorithmType,
+      nextReviewDate: new Date(data.nextReviewDate as string),
+      lastReviewDate: data.lastReviewDate
+        ? new Date(data.lastReviewDate as string)
+        : undefined,
+      algorithmData: {
+        efactor: algorithmData.efactor,
+        repetition: algorithmData.repetition,
       },
     };
   }
@@ -109,6 +152,7 @@ export class SM2Scheduler
     // For other algorithms, create a new SM2 card with reasonable defaults
     // This is a basic migration - could be enhanced with more sophisticated mapping
     return {
+      algorithmType: this.algorithmType,
       nextReviewDate: data.nextReviewDate,
       lastReviewDate: data.lastReviewDate,
       algorithmData: {

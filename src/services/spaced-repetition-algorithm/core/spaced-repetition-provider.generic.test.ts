@@ -2,7 +2,7 @@ import {
   AlgorithmType,
   RecallLevel,
   SpacedRepetitionAlgorithmProvider,
-  SpacedRepetitionScheduler,
+  ISpacedRepetitionScheduler,
 } from './spaced-repetition-algorithm.interface';
 import { calculateInterval } from '../providers/scheduling-utils';
 
@@ -132,7 +132,7 @@ export function testSpacedRepetitionAlgorithmProvider(
     describe('registerScheduler', () => {
       it('should allow registering new schedulers', () => {
         // Create a mock scheduler for testing
-        const mockScheduler: SpacedRepetitionScheduler = {
+        const mockScheduler: ISpacedRepetitionScheduler = {
           algorithmType: AlgorithmType.SM2, // Use an existing type for testing
           reschedule: jest.fn().mockReturnValue({
             newScheduling: {
@@ -165,7 +165,7 @@ export function testSpacedRepetitionAlgorithmProvider(
         );
 
         if (unsupportedAlgorithm) {
-          const mockScheduler: SpacedRepetitionScheduler = {
+          const mockScheduler: ISpacedRepetitionScheduler = {
             algorithmType: unsupportedAlgorithm,
             reschedule: jest.fn().mockReturnValue({
               newScheduling: {
@@ -208,7 +208,7 @@ export function testSpacedRepetitionAlgorithmProvider(
         if (supported.length > 0) {
           const existingAlgorithm = supported[0];
 
-          const newMockScheduler: SpacedRepetitionScheduler = {
+          const newMockScheduler: ISpacedRepetitionScheduler = {
             algorithmType: existingAlgorithm,
             reschedule: jest.fn().mockReturnValue({
               newScheduling: {

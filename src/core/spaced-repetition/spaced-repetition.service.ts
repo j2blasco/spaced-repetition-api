@@ -11,7 +11,7 @@ import {
 } from '../../services/spaced-repetition-algorithm/core/spaced-repetition-algorithm.interface';
 import { UserId } from '../user/user.interface';
 import {
-  CardRepository,
+  ICardRepository,
   CreateCardRequest,
   Card,
   CardId,
@@ -24,7 +24,7 @@ import { ReviewRepository, Review } from './review/review.interface';
  */
 export class DefaultSpacedRepetitionService implements SpacedRepetitionService {
   constructor(
-    private readonly cardRepository: CardRepository,
+    private readonly cardRepository: ICardRepository,
     private readonly reviewRepository: ReviewRepository,
     private readonly deckRepository: DeckRepository,
     private readonly algorithmProvider: SpacedRepetitionAlgorithmProvider,

@@ -1,9 +1,7 @@
 import { UserId } from 'src/core/user/user.interface';
 import { CardId } from '../card/card.interface';
 
-export interface ReviewId {
-  readonly value: string;
-}
+export type ReviewId = string;
 
 export type ReviewResponse = 'again' | 'hard' | 'good' | 'easy';
 

@@ -1,8 +1,6 @@
 import { UserId } from 'src/core/user/user.interface';
 
-export interface DeckId {
-  readonly value: string;
-}
+export type DeckId = string;
 
 export interface Deck {
   readonly id: DeckId;

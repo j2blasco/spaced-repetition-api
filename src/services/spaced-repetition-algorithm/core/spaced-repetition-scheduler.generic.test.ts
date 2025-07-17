@@ -3,7 +3,7 @@ import {
   CardSchedulingData,
   RecallLevel,
   RescheduleRequest,
-  SpacedRepetitionScheduler,
+  ISpacedRepetitionScheduler,
 } from './spaced-repetition-algorithm.interface';
 import { calculateInterval, calculateIntervalChange } from '../providers/scheduling-utils';
 
@@ -12,11 +12,11 @@ import { calculateInterval, calculateIntervalChange } from '../providers/schedul
  * This function tests any implementation of the SpacedRepetitionScheduler interface
  */
 export function testSpacedRepetitionScheduler(
-  createScheduler: () => SpacedRepetitionScheduler,
+  createScheduler: () => ISpacedRepetitionScheduler,
   algorithmType: AlgorithmType,
 ): void {
   describe(`SpacedRepetitionScheduler (${algorithmType})`, () => {
-    let scheduler: SpacedRepetitionScheduler;
+    let scheduler: ISpacedRepetitionScheduler;
 
     beforeEach(() => {
       scheduler = createScheduler();

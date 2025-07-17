@@ -3,7 +3,7 @@ import {
   StudySession,
   ReviewCardRequest,
 } from '../spaced-repetition.service.interface.js';
-import { CardRepository, CreateCardRequest } from '../card/card.interface.js';
+import { ICardRepository, CreateCardRequest } from '../card/card.interface.js';
 import { DeckRepository, CreateDeckRequest } from '../deck/deck.interface.js';
 import { NoteRepository, CreateNoteRequest } from '../note/note.interface.js';
 import { ReviewRepository } from '../review/review.interface.js';
@@ -25,7 +25,7 @@ export function testSpacedRepetitionUserStory(
     userRepository: UserRepository;
     deckRepository: DeckRepository;
     noteRepository: NoteRepository;
-    cardRepository: CardRepository;
+    cardRepository: ICardRepository;
     reviewRepository: ReviewRepository;
     spacedRepetitionService: SpacedRepetitionService;
   }>,
@@ -34,7 +34,7 @@ export function testSpacedRepetitionUserStory(
     let userRepository: UserRepository;
     let deckRepository: DeckRepository;
     let noteRepository: NoteRepository;
-    let cardRepository: CardRepository;
+    let cardRepository: ICardRepository;
     let reviewRepository: ReviewRepository;
     let spacedRepetitionService: SpacedRepetitionService;
 

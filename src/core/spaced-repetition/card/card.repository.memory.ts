@@ -1,15 +1,12 @@
 import { randomUUID } from 'crypto';
 import {
   Card,
-  CardId,
-  CardRepository,
+  ICardRepository,
   CreateCardRequest,
   UpdateCardRequest,
   DueCardsQuery,
   CardState,
 } from './card.interface.js';
-import { DeckId } from '../deck/deck.interface.js';
-import { NoteId } from '../note/note.interface.js';
 import {
   AlgorithmType,
   CardSchedulingData,
@@ -18,14 +15,16 @@ import {
 /**
  * In-memory implementation of CardRepository for testing purposes
  */
-export class InMemoryCardRepository implements CardRepository {
+export class InMemoryCardRepository implements ICardRepository {
   private cards: Map<string, Card> = new Map();
 
   private createInitialScheduling(
     algorithm: 'sm2' | 'sm4' | 'fsrs' = 'sm2',
   ): CardSchedulingData {
     const now = new Date();
+    const algorithmType = this.mapAlgorithmString(algorithm);
     return {
+      algorithmType,
       nextReviewDate: now, // New cards are immediately available
       lastReviewDate: undefined,
       algorithmData: {
@@ -38,8 +37,21 @@ export class InMemoryCardRepository implements CardRepository {
     };
   }
 
+  private mapAlgorithmString(algorithm: 'sm2' | 'sm4' | 'fsrs'): AlgorithmType {
+    switch (algorithm) {
+      case 'sm2':
+        return AlgorithmType.SM2;
+      case 'sm4':
+        return AlgorithmType.SM4;
+      case 'fsrs':
+        return AlgorithmType.FSRS;
+      default:
+        return AlgorithmType.SM2;
+    }
+  }
+
   async create(request: CreateCardRequest): Promise<Card> {
-    const id: CardId = { value: randomUUID() };
+    const id: string = randomUUID();
     const now = new Date();
 
     const card: Card = {
@@ -54,23 +66,23 @@ export class InMemoryCardRepository implements CardRepository {
       updatedAt: now,
     };
 
-    this.cards.set(id.value, card);
+    this.cards.set(id, card);
     return card;
   }
 
-  async findById(id: CardId): Promise<Card | null> {
-    return this.cards.get(id.value) || null;
+  async findById(id: string): Promise<Card | null> {
+    return this.cards.get(id) || null;
   }
 
-  async findByDeckId(deckId: DeckId): Promise<readonly Card[]> {
+  async findByDeckId(deckId: string): Promise<readonly Card[]> {
     return Array.from(this.cards.values()).filter(
-      (card) => card.deckId.value === deckId.value,
+      (card) => card.deckId === deckId,
     );
   }
 
-  async findByNoteId(noteId: NoteId): Promise<readonly Card[]> {
+  async findByNoteId(noteId: string): Promise<readonly Card[]> {
     return Array.from(this.cards.values()).filter(
-      (card) => card.noteId.value === noteId.value,
+      (card) => card.noteId === noteId,
     );
   }
 
@@ -81,7 +93,7 @@ export class InMemoryCardRepository implements CardRepository {
     // Filter by deck if specified
     if (query.deckId) {
       filteredCards = filteredCards.filter(
-        (card) => card.deckId.value === query.deckId!.value,
+        (card) => card.deckId === query.deckId!,
       );
     }
 
@@ -103,10 +115,10 @@ export class InMemoryCardRepository implements CardRepository {
     return filteredCards;
   }
 
-  async update(id: CardId, request: UpdateCardRequest): Promise<Card> {
-    const existingCard = this.cards.get(id.value);
+  async update(id: string, request: UpdateCardRequest): Promise<Card> {
+    const existingCard = this.cards.get(id);
     if (!existingCard) {
-      throw new Error(`Card with id '${id.value}' not found`);
+      throw new Error(`Card with id '${id}' not found`);
     }
 
     const updatedCard: Card = {
@@ -118,24 +130,24 @@ export class InMemoryCardRepository implements CardRepository {
       updatedAt: new Date(),
     };
 
-    this.cards.set(id.value, updatedCard);
+    this.cards.set(id, updatedCard);
     return updatedCard;
   }
 
-  async delete(id: CardId): Promise<void> {
-    const exists = this.cards.has(id.value);
+  async delete(id: string): Promise<void> {
+    const exists = this.cards.has(id);
     if (!exists) {
-      throw new Error(`Card with id '${id.value}' not found`);
+      throw new Error(`Card with id '${id}' not found`);
     }
-    this.cards.delete(id.value);
+    this.cards.delete(id);
   }
 
-  async exists(id: CardId): Promise<boolean> {
-    return this.cards.has(id.value);
+  async exists(id: string): Promise<boolean> {
+    return this.cards.has(id);
   }
 
   async getCardCountsByState(
-    deckId: DeckId,
+    deckId: string,
   ): Promise<Record<CardState, number>> {
     const deckCards = await this.findByDeckId(deckId);
 

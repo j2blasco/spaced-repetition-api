@@ -1,50 +1,44 @@
-import { CardSchedulingData } from 'src/services/spaced-repetition-algorithm/core/spaced-repetition-algorithm.interface.js';
-import { DeckId } from '../deck/deck.interface.js';
-import { NoteId } from '../note/note.interface.js';
-
-export interface CardId {
-  readonly value: string;
-}
+import { AlgorithmType, CardSchedulingData } from 'src/services/spaced-repetition-algorithm/core/spaced-repetition-algorithm.interface.js';
 
 export type CardType = 'basic' | 'reverse' | 'cloze';
 export type CardState = 'new' | 'learning' | 'review' | 'relearning';
 
-export interface Card {
-  readonly id: CardId;
-  readonly noteId: NoteId;
-  readonly deckId: DeckId;
+export type Card = {
+  readonly id: string;
+  readonly noteId: string;
+  readonly deckId: string;
   readonly cardType: CardType;
   readonly front: string;
   readonly back: string;
   readonly scheduling: CardSchedulingData;
   readonly createdAt: Date;
   readonly updatedAt: Date;
-}
+};
 
-export interface CreateCardRequest {
-  readonly noteId: NoteId;
-  readonly deckId: DeckId;
+export type CreateCardRequest = {
+  readonly noteId: string;
+  readonly deckId: string;
   readonly cardType: CardType;
   readonly front: string;
   readonly back: string;
-  readonly algorithm?: 'sm2' | 'sm4' | 'fsrs';
-}
+  readonly algorithm: AlgorithmType;
+};
 
-export interface UpdateCardRequest {
+export type UpdateCardRequest = {
   readonly front?: string;
   readonly back?: string;
   readonly cardType?: CardType;
   readonly scheduling?: CardSchedulingData;
-}
+};
 
-export interface DueCardsQuery {
+export type DueCardsQuery = {
   readonly userId?: string;
-  readonly deckId?: DeckId;
+  readonly deckId?: string;
   readonly maxCards?: number;
   readonly includeNew?: boolean;
-}
+};
 
-export interface CardRepository {
+export interface ICardRepository {
   /**
    * Create a new card
    */
@@ -53,17 +47,17 @@ export interface CardRepository {
   /**
    * Find a card by ID
    */
-  findById(id: CardId): Promise<Card | null>;
+  findById(id: string): Promise<Card | null>;
 
   /**
    * Find all cards in a deck
    */
-  findByDeckId(deckId: DeckId): Promise<readonly Card[]>;
+  findByDeckId(deckId: string): Promise<readonly Card[]>;
 
   /**
    * Find all cards for a note
    */
-  findByNoteId(noteId: NoteId): Promise<readonly Card[]>;
+  findByNoteId(noteId: string): Promise<readonly Card[]>;
 
   /**
    * Find cards that are due for review
@@ -73,20 +67,20 @@ export interface CardRepository {
   /**
    * Update an existing card
    */
-  update(id: CardId, request: UpdateCardRequest): Promise<Card>;
+  update(id: string, request: UpdateCardRequest): Promise<Card>;
 
   /**
    * Delete a card
    */
-  delete(id: CardId): Promise<void>;
+  delete(id: string): Promise<void>;
 
   /**
    * Check if a card exists
    */
-  exists(id: CardId): Promise<boolean>;
+  exists(id: string): Promise<boolean>;
 
   /**
    * Get cards count by state for a deck
    */
-  getCardCountsByState(deckId: DeckId): Promise<Record<CardState, number>>;
+  getCardCountsByState(deckId: string): Promise<Record<CardState, number>>;
 }

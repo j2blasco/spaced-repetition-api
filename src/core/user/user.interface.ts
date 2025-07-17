@@ -1,6 +1,4 @@
-export interface UserId {
-  readonly value: string;
-}
+export type UserId = string;
 
 export interface UserPreferences {
   readonly dailyNewCards: number;

@@ -1,8 +1,6 @@
 import { DeckId } from '../deck/deck.interface.js';
 
-export interface NoteId {
-  readonly value: string;
-}
+export type NoteId = string;
 
 export interface NoteFields {
   readonly front: string;

@@ -1,7 +1,7 @@
 import {
   AlgorithmType,
   SpacedRepetitionAlgorithmProvider,
-  SpacedRepetitionScheduler,
+  ISpacedRepetitionScheduler,
 } from '../core/spaced-repetition-algorithm.interface';
 import { SM2Scheduler } from './sm2/sm2-scheduler';
 
@@ -14,7 +14,7 @@ export class DefaultSpacedRepetitionAlgorithmProvider
 {
   private readonly schedulers = new Map<
     AlgorithmType,
-    SpacedRepetitionScheduler<unknown>
+    ISpacedRepetitionScheduler<unknown>
   >();
 
   constructor() {
@@ -27,12 +27,12 @@ export class DefaultSpacedRepetitionAlgorithmProvider
    */
   getScheduler<TAlgorithmData = unknown>(
     algorithmType: AlgorithmType,
-  ): SpacedRepetitionScheduler<TAlgorithmData> {
+  ): ISpacedRepetitionScheduler<TAlgorithmData> {
     const scheduler = this.schedulers.get(algorithmType);
     if (!scheduler) {
       throw new Error(`Algorithm '${algorithmType}' is not supported`);
     }
-    return scheduler as SpacedRepetitionScheduler<TAlgorithmData>;
+    return scheduler as ISpacedRepetitionScheduler<TAlgorithmData>;
   }
 
   /**
@@ -53,7 +53,7 @@ export class DefaultSpacedRepetitionAlgorithmProvider
    * Register a new scheduler implementation
    */
   registerScheduler<TAlgorithmData = unknown>(
-    scheduler: SpacedRepetitionScheduler<TAlgorithmData>,
+    scheduler: ISpacedRepetitionScheduler<TAlgorithmData>,
   ): void {
     this.schedulers.set(scheduler.algorithmType, scheduler);
   }
