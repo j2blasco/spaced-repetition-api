@@ -17,3 +17,7 @@ When starting a new task:
 Introduce abstractions via DI when flexibility is needed. This allows implementations to be replaced easily in the future.
 
 # Do not update the project README.md if it isn't required
+
+# If a test fails 3 times in a row after attempting to fixing it. Stop, think about breaking the test in smaller test before continue iterating.
+
+# Things should be simple, if not, there is probably an architeture problem. If to solve an issue we add a lot of complexity, stop. Explain your idea to fix it and ask for advice.
