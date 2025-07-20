@@ -1,17 +1,16 @@
 import { UserId } from '../user/user.interface';
-import { CardId, Card, CreateCardRequest } from './card/card.interface';
-import { DeckId } from './deck/deck.interface';
+import { Card, CreateCardRequest } from './card/card.interface';
 import { Review } from './review/review.interface';
 
 export interface StudySession {
   readonly userId: UserId;
-  readonly deckId?: DeckId;
+  readonly tags?: readonly string[];
   readonly maxCards?: number;
   readonly includeNewCards?: boolean;
 }
 
 export interface ReviewCardRequest {
-  readonly cardId: CardId;
+  readonly cardId: string;
   readonly userId: UserId;
   readonly response: 'again' | 'hard' | 'good' | 'easy';
   readonly responseTime?: number;
@@ -49,15 +48,15 @@ export interface SpacedRepetitionService {
   /**
    * Get the next review date for a card
    */
-  getNextReviewDate(cardId: CardId): Promise<Date | null>;
+  getNextReviewDate(cardId: string): Promise<Date | null>;
 
   /**
    * Check if a card is due for review
    */
-  isCardDue(cardId: CardId): Promise<boolean>;
+  isCardDue(cardId: string): Promise<boolean>;
 
   /**
-   * Get cards due for review for a specific user/deck
+   * Get cards due for review for a specific user with optional tag filtering
    */
-  getDueCards(userId: UserId, deckId?: DeckId): Promise<readonly Card[]>;
+  getDueCards(userId: UserId, tags?: readonly string[]): Promise<readonly Card[]>;
 }

@@ -35,7 +35,7 @@ export function testUserRepository(
 
         const user = await repository.create(request);
 
-        expect(user.id.value).toBeDefined();
+        expect(user.id).toBeDefined();
         expect(user.username).toBe('testuser');
         expect(user.email).toBe('test@example.com');
         expect(user.preferences.dailyNewCards).toBe(20);
@@ -54,7 +54,7 @@ export function testUserRepository(
 
         const user = await repository.create(request);
 
-        expect(user.id.value).toBeDefined();
+        expect(user.id).toBeDefined();
         expect(user.username).toBe('minimaluser');
         expect(user.email).toBe('minimal@example.com');
         expect(user.preferences).toBeDefined();
@@ -111,8 +111,7 @@ export function testUserRepository(
       });
 
       it('should return null for non-existent id', async () => {
-        const nonExistentId: UserId = { value: 'non-existent-id' };
-        const found = await repository.findById(nonExistentId);
+        const found = await repository.findById('nonExistentId');
         expect(found).toBeNull();
       });
     });
@@ -207,13 +206,12 @@ export function testUserRepository(
       });
 
       it('should throw error for non-existent user', async () => {
-        const nonExistentId: UserId = { value: 'non-existent-id' };
         const updateRequest: UpdateUserRequest = {
           username: 'updated',
         };
 
         await expect(
-          repository.update(nonExistentId, updateRequest),
+          repository.update('nonExistentId', updateRequest),
         ).rejects.toThrow();
       });
     });
@@ -232,8 +230,7 @@ export function testUserRepository(
       });
 
       it('should throw error when deleting non-existent user', async () => {
-        const nonExistentId: UserId = { value: 'non-existent-id' };
-        await expect(repository.delete(nonExistentId)).rejects.toThrow();
+        await expect(repository.delete('nonExistentId')).rejects.toThrow();
       });
     });
 
@@ -249,8 +246,7 @@ export function testUserRepository(
       });
 
       it('should return false for non-existent user', async () => {
-        const nonExistentId: UserId = { value: 'non-existent-id' };
-        const exists = await repository.exists(nonExistentId);
+        const exists = await repository.exists('nonExistentId');
         expect(exists).toBe(false);
       });
     });

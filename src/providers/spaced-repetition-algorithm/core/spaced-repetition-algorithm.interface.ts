@@ -1,4 +1,4 @@
-import { JsonObject } from '@j2blasco/ts-crud/types/utils/json-type';
+import { JsonObject } from '@j2blasco/ts-crud';
 
 export enum RecallLevel {
   HARD = 'hard',

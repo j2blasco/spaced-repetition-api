@@ -1,5 +1,4 @@
 import { UserId } from 'src/core/user/user.interface';
-import { CardId } from '../card/card.interface';
 
 export type ReviewId = string;
 
@@ -7,7 +6,7 @@ export type ReviewResponse = 'again' | 'hard' | 'good' | 'easy';
 
 export interface Review {
   readonly id: ReviewId;
-  readonly cardId: CardId;
+  readonly cardId: string;
   readonly userId: UserId;
   readonly response: ReviewResponse;
   readonly responseTime: number; // in seconds
@@ -17,7 +16,7 @@ export interface Review {
 }
 
 export interface CreateReviewRequest {
-  readonly cardId: CardId;
+  readonly cardId: string;
   readonly userId: UserId;
   readonly response: ReviewResponse;
   readonly responseTime?: number;
@@ -37,7 +36,7 @@ export interface ReviewRepository {
   /**
    * Find all reviews for a card
    */
-  findByCardId(cardId: CardId): Promise<readonly Review[]>;
+  findByCardId(cardId: string): Promise<readonly Review[]>;
 
   /**
    * Find all reviews by a user

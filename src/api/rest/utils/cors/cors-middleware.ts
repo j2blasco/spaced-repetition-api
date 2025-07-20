@@ -1,10 +1,13 @@
 import cors, { CorsOptions } from 'cors';
 import { Express } from 'express';
-import { availableDomains } from 'src/common/domain-list';
 
-const allowedHostnames = availableDomains
-  .filter((domain) => domain.corsEnabled)
-  .map((domain) => domain.hostname);
+// Temporary fix: simple allowed domains list
+const allowedHostnames: string[] = [
+  'localhost',
+  '127.0.0.1',
+  'localhost:3000',
+  'localhost:5173',
+];
 
 const serviceHostname = process.env['SERVICE_HOSTNAME'];
 if (serviceHostname) {

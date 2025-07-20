@@ -5,12 +5,12 @@ import {
   CreateCardRequest,
   UpdateCardRequest,
   DueCardsQuery,
-  CardState,
-} from './card.interface.js';
+} from './card.interface';
 import {
   AlgorithmType,
   CardSchedulingData,
-} from 'src/services/spaced-repetition-algorithm/core/spaced-repetition-algorithm.interface.js';
+} from 'src/providers/spaced-repetition-algorithm/core/spaced-repetition-algorithm.interface';
+import { UserId } from 'src/core/user/user.interface';
 
 /**
  * In-memory implementation of CardRepository for testing purposes
@@ -19,35 +19,21 @@ export class InMemoryCardRepository implements ICardRepository {
   private cards: Map<string, Card> = new Map();
 
   private createInitialScheduling(
-    algorithm: 'sm2' | 'sm4' | 'fsrs' = 'sm2',
+    algorithm: AlgorithmType = AlgorithmType.SM2,
   ): CardSchedulingData {
     const now = new Date();
-    const algorithmType = this.mapAlgorithmString(algorithm);
     return {
-      algorithmType,
+      algorithmType: algorithm,
       nextReviewDate: now, // New cards are immediately available
       lastReviewDate: undefined,
       algorithmData: {
-        algorithm: algorithm as AlgorithmType,
+        algorithm,
         interval: 1,
         repetitions: 0,
         easeFactor: 2.5,
-        cardState: 'new' as CardState,
+        cardState: 'new',
       },
     };
-  }
-
-  private mapAlgorithmString(algorithm: 'sm2' | 'sm4' | 'fsrs'): AlgorithmType {
-    switch (algorithm) {
-      case 'sm2':
-        return AlgorithmType.SM2;
-      case 'sm4':
-        return AlgorithmType.SM4;
-      case 'fsrs':
-        return AlgorithmType.FSRS;
-      default:
-        return AlgorithmType.SM2;
-    }
   }
 
   async create(request: CreateCardRequest): Promise<Card> {
@@ -56,11 +42,9 @@ export class InMemoryCardRepository implements ICardRepository {
 
     const card: Card = {
       id,
-      noteId: request.noteId,
-      deckId: request.deckId,
-      cardType: request.cardType,
-      front: request.front,
-      back: request.back,
+      userId: request.userId,
+      tags: request.tags || [],
+      data: request.data,
       scheduling: this.createInitialScheduling(request.algorithm),
       createdAt: now,
       updatedAt: now,
@@ -74,26 +58,34 @@ export class InMemoryCardRepository implements ICardRepository {
     return this.cards.get(id) || null;
   }
 
-  async findByDeckId(deckId: string): Promise<readonly Card[]> {
+  async findByUserId(userId: UserId): Promise<readonly Card[]> {
     return Array.from(this.cards.values()).filter(
-      (card) => card.deckId === deckId,
+      (card) => card.userId === userId,
     );
   }
 
-  async findByNoteId(noteId: string): Promise<readonly Card[]> {
-    return Array.from(this.cards.values()).filter(
-      (card) => card.noteId === noteId,
-    );
+  async findByTags(userId: UserId, tags: readonly string[]): Promise<readonly Card[]> {
+    return Array.from(this.cards.values()).filter((card) => {
+      if (card.userId !== userId) return false;
+      
+      // Check if card has any of the specified tags
+      return tags.some(tag => card.tags.includes(tag));
+    });
   }
 
   async findDueCards(query: DueCardsQuery): Promise<readonly Card[]> {
     const now = new Date();
     let filteredCards = Array.from(this.cards.values());
 
-    // Filter by deck if specified
-    if (query.deckId) {
-      filteredCards = filteredCards.filter(
-        (card) => card.deckId === query.deckId!,
+    // Filter by user
+    filteredCards = filteredCards.filter(
+      (card) => card.userId === query.userId,
+    );
+
+    // Filter by tags if specified
+    if (query.tags && query.tags.length > 0) {
+      filteredCards = filteredCards.filter((card) =>
+        query.tags!.some(tag => card.tags.includes(tag))
       );
     }
 
@@ -123,9 +115,8 @@ export class InMemoryCardRepository implements ICardRepository {
 
     const updatedCard: Card = {
       ...existingCard,
-      front: request.front ?? existingCard.front,
-      back: request.back ?? existingCard.back,
-      cardType: request.cardType ?? existingCard.cardType,
+      tags: request.tags ?? existingCard.tags,
+      data: request.data ?? existingCard.data,
       scheduling: request.scheduling ?? existingCard.scheduling,
       updatedAt: new Date(),
     };
@@ -146,23 +137,19 @@ export class InMemoryCardRepository implements ICardRepository {
     return this.cards.has(id);
   }
 
-  async getCardCountsByState(
-    deckId: string,
-  ): Promise<Record<CardState, number>> {
-    const deckCards = await this.findByDeckId(deckId);
+  async getCardCount(userId: UserId): Promise<number> {
+    const userCards = await this.findByUserId(userId);
+    return userCards.length;
+  }
 
-    const counts: Record<CardState, number> = {
-      new: 0,
-      learning: 0,
-      review: 0,
-      relearning: 0,
-    };
+  async getCardCountsByTags(userId: UserId): Promise<Record<string, number>> {
+    const userCards = await this.findByUserId(userId);
+    const counts: Record<string, number> = {};
 
-    for (const card of deckCards) {
-      const state =
-        (card.scheduling.algorithmData as { cardState?: string })?.cardState ||
-        'new';
-      counts[state as CardState]++;
+    for (const card of userCards) {
+      for (const tag of card.tags) {
+        counts[tag] = (counts[tag] || 0) + 1;
+      }
     }
 
     return counts;

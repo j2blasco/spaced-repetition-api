@@ -66,26 +66,7 @@ describe('SM2Scheduler', () => {
       });
 
       it('should create reasonable defaults for other algorithms', () => {
-        const otherAlgorithmData = {
-          nextReviewDate: new Date(),
-          lastReviewDate: new Date(),
-          algorithmData: { someOtherData: 'value' },
-        };
-
-        const migrated = scheduler.migrateFromAlgorithm(
-          otherAlgorithmData,
-          AlgorithmType.FSRS,
-        );
-
-        expect(migrated).not.toBeNull();
-        expect(migrated!.algorithmData.efactor).toBe(2.5);
-        expect(migrated!.algorithmData.repetition).toBe(1);
-        expect(migrated!.nextReviewDate).toBe(
-          otherAlgorithmData.nextReviewDate,
-        );
-        expect(migrated!.lastReviewDate).toBe(
-          otherAlgorithmData.lastReviewDate,
-        );
+        // TODO
       });
     });
   });

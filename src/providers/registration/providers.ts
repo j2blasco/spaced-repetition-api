@@ -1,7 +1,7 @@
-import { registerProviders as registerDependencyInjectionProvidersAlpha } from './registration/providers-alpha';
-import { registerProviders as registerDependencyInjectionProvidersBeta } from './registration/providers-beta';
-import { registerProviders as registerDependencyInjectionProvidersProd } from './registration/providers-prod';
-import { registerProviders as registerDependencyInjectionProvidersTest } from './registration/providers-test';
+import { registerProviders as registerDependencyInjectionProvidersAlpha } from './providers-alpha';
+import { registerProviders as registerDependencyInjectionProvidersBeta } from './providers-beta';
+import { registerProviders as registerDependencyInjectionProvidersProd } from './providers-prod';
+import { registerProviders as registerDependencyInjectionProvidersTest } from './providers-test';
 
 export function registerProviders(envType: string) {
   switch (envType) {

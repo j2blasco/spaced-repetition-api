@@ -5,7 +5,7 @@ initModuleAlias();
 import express from 'express';
 import { startRestApiServer } from './api/rest/rest-server';
 import { useCorsMiddleware } from './api/rest/utils/cors/cors-middleware';
-import { registerProviders } from './providers/providers';
+import { registerProviders } from './providers/registration/providers';
 
 const app = express();
 const port = process.env.PORT ? parseInt(process.env.PORT) : 4001;

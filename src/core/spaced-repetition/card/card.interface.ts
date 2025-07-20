@@ -1,39 +1,35 @@
-import { AlgorithmType, CardSchedulingData } from 'src/services/spaced-repetition-algorithm/core/spaced-repetition-algorithm.interface.js';
-
-export type CardType = 'basic' | 'reverse' | 'cloze';
-export type CardState = 'new' | 'learning' | 'review' | 'relearning';
+import {
+  AlgorithmType,
+  CardSchedulingData,
+} from 'src/providers/spaced-repetition-algorithm/core/spaced-repetition-algorithm.interface';
+import { UserId } from 'src/core/user/user.interface';
 
 export type Card = {
   readonly id: string;
-  readonly noteId: string;
-  readonly deckId: string;
-  readonly cardType: CardType;
-  readonly front: string;
-  readonly back: string;
+  readonly userId: UserId;
+  readonly tags: readonly string[];
+  readonly data: Record<string, unknown>;
   readonly scheduling: CardSchedulingData;
   readonly createdAt: Date;
   readonly updatedAt: Date;
 };
 
 export type CreateCardRequest = {
-  readonly noteId: string;
-  readonly deckId: string;
-  readonly cardType: CardType;
-  readonly front: string;
-  readonly back: string;
-  readonly algorithm: AlgorithmType;
+  readonly userId: UserId;
+  readonly tags?: readonly string[];
+  readonly data: Record<string, unknown>;
+  readonly algorithm?: AlgorithmType;
 };
 
 export type UpdateCardRequest = {
-  readonly front?: string;
-  readonly back?: string;
-  readonly cardType?: CardType;
+  readonly tags?: readonly string[];
+  readonly data?: Record<string, unknown>;
   readonly scheduling?: CardSchedulingData;
 };
 
 export type DueCardsQuery = {
-  readonly userId?: string;
-  readonly deckId?: string;
+  readonly userId: UserId;
+  readonly tags?: readonly string[];
   readonly maxCards?: number;
   readonly includeNew?: boolean;
 };
@@ -50,14 +46,14 @@ export interface ICardRepository {
   findById(id: string): Promise<Card | null>;
 
   /**
-   * Find all cards in a deck
+   * Find all cards for a user
    */
-  findByDeckId(deckId: string): Promise<readonly Card[]>;
+  findByUserId(userId: UserId): Promise<readonly Card[]>;
 
   /**
-   * Find all cards for a note
+   * Find cards by tags (supports partial matching)
    */
-  findByNoteId(noteId: string): Promise<readonly Card[]>;
+  findByTags(userId: UserId, tags: readonly string[]): Promise<readonly Card[]>;
 
   /**
    * Find cards that are due for review
@@ -80,7 +76,12 @@ export interface ICardRepository {
   exists(id: string): Promise<boolean>;
 
   /**
-   * Get cards count by state for a deck
+   * Get total card count for a user
    */
-  getCardCountsByState(deckId: string): Promise<Record<CardState, number>>;
+  getCardCount(userId: UserId): Promise<number>;
+
+  /**
+   * Get cards count by tags for a user
+   */
+  getCardCountsByTags(userId: UserId): Promise<Record<string, number>>;
 }

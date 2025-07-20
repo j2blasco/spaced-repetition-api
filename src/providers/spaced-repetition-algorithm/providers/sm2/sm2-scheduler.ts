@@ -1,3 +1,4 @@
+import { JsonObject } from '@j2blasco/ts-crud';
 import {
   ISpacedRepetitionScheduler,
   AlgorithmType,
@@ -8,7 +9,6 @@ import {
 } from '../../core/spaced-repetition-algorithm.interface';
 import { updateSchedulingWithInterval } from '../scheduling-utils';
 import { SM2AlgorithmData } from './sm2-algorithm-data.interface';
-import { JsonObject } from '@j2blasco/ts-crud/types/utils/json-type';
 
 /**
  * SuperMemo 2 (SM-2) algorithm implementation

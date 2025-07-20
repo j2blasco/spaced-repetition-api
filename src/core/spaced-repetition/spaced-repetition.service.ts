@@ -4,20 +4,18 @@ import {
   ReviewCardRequest,
   StudySessionResult,
 } from './spaced-repetition.service.interface';
-import {
-  SpacedRepetitionAlgorithmProvider,
-  AlgorithmType,
-  RecallLevel,
-} from '../../services/spaced-repetition-algorithm/core/spaced-repetition-algorithm.interface';
 import { UserId } from '../user/user.interface';
 import {
   ICardRepository,
   CreateCardRequest,
   Card,
-  CardId,
 } from './card/card.interface';
-import { DeckRepository, DeckId } from './deck/deck.interface';
-import { ReviewRepository, Review } from './review/review.interface';
+import { ISpacedRepetitionSchedulerService } from 'src/providers/spaced-repetition-algorithm/core/space-repetition-scheduler-service.interface';
+import {
+  AlgorithmType,
+  RecallLevel,
+} from 'src/providers/spaced-repetition-algorithm/core/spaced-repetition-algorithm.interface';
+import { Review, ReviewRepository } from './review/review.interface';
 
 /**
  * Implementation of SpacedRepetitionService
@@ -26,13 +24,11 @@ export class DefaultSpacedRepetitionService implements SpacedRepetitionService {
   constructor(
     private readonly cardRepository: ICardRepository,
     private readonly reviewRepository: ReviewRepository,
-    private readonly deckRepository: DeckRepository,
-    private readonly algorithmProvider: SpacedRepetitionAlgorithmProvider,
+    private readonly algorithmProvider: ISpacedRepetitionSchedulerService,
   ) {}
 
   async createCard(request: CreateCardRequest): Promise<Card> {
-    const algorithm = request.algorithm || 'sm2';
-    const _algorithmType = this.mapAlgorithmString(algorithm);
+    const algorithm = request.algorithm || AlgorithmType.SM2;
 
     const cardWithScheduling: CreateCardRequest = {
       ...request,
@@ -44,8 +40,8 @@ export class DefaultSpacedRepetitionService implements SpacedRepetitionService {
 
   async getStudySession(session: StudySession): Promise<StudySessionResult> {
     const dueCardsQuery = {
-      userId: session.userId.value,
-      deckId: session.deckId,
+      userId: session.userId,
+      tags: session.tags,
       maxCards: session.maxCards,
       includeNew: session.includeNewCards,
     };
@@ -81,7 +77,7 @@ export class DefaultSpacedRepetitionService implements SpacedRepetitionService {
     // Get the current card
     const card = await this.cardRepository.findById(request.cardId);
     if (!card) {
-      throw new Error(`Card with id '${request.cardId.value}' not found`);
+      throw new Error(`Card with id '${request.cardId}' not found`);
     }
 
     // Map API response to algorithm response
@@ -119,26 +115,18 @@ export class DefaultSpacedRepetitionService implements SpacedRepetitionService {
       scheduling: rescheduleResult.newScheduling,
     });
 
-    // Update deck's reviewsToday counter
-    const deck = await this.deckRepository.findById(card.deckId);
-    if (deck) {
-      await this.deckRepository.update(card.deckId, {
-        reviewsToday: deck.reviewsToday + 1,
-      });
-    }
-
     return {
       updatedCard,
       review,
     };
   }
 
-  async getNextReviewDate(cardId: CardId): Promise<Date | null> {
+  async getNextReviewDate(cardId: string): Promise<Date | null> {
     const card = await this.cardRepository.findById(cardId);
     return card?.scheduling.nextReviewDate || null;
   }
 
-  async isCardDue(cardId: CardId): Promise<boolean> {
+  async isCardDue(cardId: string): Promise<boolean> {
     const card = await this.cardRepository.findById(cardId);
     if (!card) {
       return false;
@@ -148,10 +136,10 @@ export class DefaultSpacedRepetitionService implements SpacedRepetitionService {
     return card.scheduling.nextReviewDate <= now;
   }
 
-  async getDueCards(userId: UserId, deckId?: DeckId): Promise<readonly Card[]> {
+  async getDueCards(userId: UserId, tags?: readonly string[]): Promise<readonly Card[]> {
     return this.cardRepository.findDueCards({
-      userId: userId.value,
-      deckId,
+      userId: userId,
+      tags,
       includeNew: true,
     });
   }

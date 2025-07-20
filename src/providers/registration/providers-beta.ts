@@ -1,6 +1,6 @@
-import { NoSqlDatabaseTesting } from 'src/services/backend/no-sql-db/providers/testing/no-sql-db-testing';
-import { noSqlDatabaseInjectionToken } from 'src/services/backend/no-sql-db/core/no-sql-db.injection-token';
-import { DependencyInjector } from 'src/services/injector/injector';
+import { NoSqlDatabaseTesting } from 'src/providers/backend/no-sql-db/testing/no-sql-db-testing';
+import { DependencyInjector } from 'src/providers/injector/injector';
+import { noSqlDatabaseInjectionToken } from '../backend/no-sql-db/core/no-sql-db.injection-token';
 
 export function registerProviders() {
   DependencyInjector.clear();
@@ -10,4 +10,3 @@ export function registerProviders() {
     new NoSqlDatabaseTesting(),
   );
 }
-
