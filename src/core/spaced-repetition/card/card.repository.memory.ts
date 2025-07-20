@@ -18,16 +18,14 @@ import { UserId } from 'src/core/user/user.interface';
 export class InMemoryCardRepository implements ICardRepository {
   private cards: Map<string, Card> = new Map();
 
-  private createInitialScheduling(
-    algorithm: AlgorithmType = AlgorithmType.SM2,
-  ): CardSchedulingData {
+  private createInitialScheduling(): CardSchedulingData {
     const now = new Date();
     return {
-      algorithmType: algorithm,
+      algorithmType: AlgorithmType.SM2,
       nextReviewDate: now, // New cards are immediately available
       lastReviewDate: undefined,
       algorithmData: {
-        algorithm,
+        algorithm: AlgorithmType.SM2,
         interval: 1,
         repetitions: 0,
         easeFactor: 2.5,
@@ -37,15 +35,15 @@ export class InMemoryCardRepository implements ICardRepository {
   }
 
   async create(request: CreateCardRequest): Promise<Card> {
-    const id: string = randomUUID();
+    const id = randomUUID();
     const now = new Date();
-
+    
     const card: Card = {
       id,
       userId: request.userId,
       tags: request.tags || [],
       data: request.data,
-      scheduling: this.createInitialScheduling(request.algorithm),
+      scheduling: this.createInitialScheduling(),
       createdAt: now,
       updatedAt: now,
     };
@@ -64,12 +62,15 @@ export class InMemoryCardRepository implements ICardRepository {
     );
   }
 
-  async findByTags(userId: UserId, tags: readonly string[]): Promise<readonly Card[]> {
+  async findByTags(
+    userId: UserId,
+    tags: readonly string[],
+  ): Promise<readonly Card[]> {
     return Array.from(this.cards.values()).filter((card) => {
       if (card.userId !== userId) return false;
-      
+
       // Check if card has any of the specified tags
-      return tags.some(tag => card.tags.includes(tag));
+      return tags.some((tag) => card.tags.includes(tag));
     });
   }
 
@@ -85,23 +86,19 @@ export class InMemoryCardRepository implements ICardRepository {
     // Filter by tags if specified
     if (query.tags && query.tags.length > 0) {
       filteredCards = filteredCards.filter((card) =>
-        query.tags!.some(tag => card.tags.includes(tag))
+        query.tags!.some((tag) => card.tags.includes(tag)),
       );
     }
 
     // Filter by cards that are due
     filteredCards = filteredCards.filter((card) => {
       const isDue = card.scheduling.nextReviewDate <= now;
-      const isNew =
-        (card.scheduling.algorithmData as { cardState?: string })?.cardState ===
-        'new';
-
-      return isDue && (query.includeNew !== false || !isNew);
+      return isDue;
     });
 
     // Limit results if specified
-    if (query.maxCards) {
-      filteredCards = filteredCards.slice(0, query.maxCards);
+    if (query.limit) {
+      filteredCards = filteredCards.slice(0, query.limit);
     }
 
     return filteredCards;
@@ -117,7 +114,7 @@ export class InMemoryCardRepository implements ICardRepository {
       ...existingCard,
       tags: request.tags ?? existingCard.tags,
       data: request.data ?? existingCard.data,
-      scheduling: request.scheduling ?? existingCard.scheduling,
+      scheduling: existingCard.scheduling,
       updatedAt: new Date(),
     };
 

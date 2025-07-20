@@ -1,6 +1,6 @@
 import { UserId } from '../user/user.interface';
 import { Card, CreateCardRequest } from './card/card.interface';
-import { Review } from './review/review.interface';
+import { ReviewResponse } from './review/review.interface';
 
 export interface StudySession {
   readonly userId: UserId;
@@ -12,7 +12,7 @@ export interface StudySession {
 export interface ReviewCardRequest {
   readonly cardId: string;
   readonly userId: UserId;
-  readonly response: 'again' | 'hard' | 'good' | 'easy';
+  readonly response: ReviewResponse;
   readonly responseTime?: number;
 }
 
@@ -40,10 +40,7 @@ export interface SpacedRepetitionService {
   /**
    * Review a card and update its scheduling
    */
-  reviewCard(request: ReviewCardRequest): Promise<{
-    updatedCard: Card;
-    review: Review;
-  }>;
+  reviewCard(request: ReviewCardRequest): Promise<Card>;
 
   /**
    * Get the next review date for a card

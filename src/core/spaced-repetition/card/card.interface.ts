@@ -1,7 +1,4 @@
-import {
-  AlgorithmType,
-  CardSchedulingData,
-} from 'src/providers/spaced-repetition-algorithm/core/spaced-repetition-algorithm.interface';
+import { CardSchedulingData } from 'src/providers/spaced-repetition-algorithm/core/spaced-repetition-algorithm.interface';
 import { UserId } from 'src/core/user/user.interface';
 
 export type Card = {
@@ -14,25 +11,23 @@ export type Card = {
   readonly updatedAt: Date;
 };
 
-export type CreateCardRequest = {
+export interface CreateCardRequest {
   readonly userId: UserId;
   readonly tags?: readonly string[];
   readonly data: Record<string, unknown>;
-  readonly algorithm?: AlgorithmType;
-};
+}
 
-export type UpdateCardRequest = {
+export interface UpdateCardRequest {
   readonly tags?: readonly string[];
   readonly data?: Record<string, unknown>;
-  readonly scheduling?: CardSchedulingData;
-};
+}
 
-export type DueCardsQuery = {
+export interface DueCardsQuery {
   readonly userId: UserId;
   readonly tags?: readonly string[];
-  readonly maxCards?: number;
-  readonly includeNew?: boolean;
-};
+  readonly limit?: number;
+  readonly currentDate?: Date;
+}
 
 export interface ICardRepository {
   /**
