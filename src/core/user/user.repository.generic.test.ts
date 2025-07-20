@@ -1,9 +1,10 @@
+// TODO: update test so that they dont need username nor email
+
 import { describe, it, expect, beforeEach } from '@jest/globals';
 import {
   UserRepository,
   CreateUserRequest,
   UpdateUserRequest,
-  UserId,
 } from './user.interface';
 
 /**
@@ -23,11 +24,9 @@ export function testUserRepository(
     describe('create', () => {
       it('should create a user with all fields', async () => {
         const request: CreateUserRequest = {
-          username: 'testuser',
-          email: 'test@example.com',
           preferences: {
-            dailyNewCards: 20,
-            maxReviews: 100,
+            maxNewCardsPerDay: 20,
+            maxReviewsPerDay: 100,
             timezone: 'UTC',
             defaultAlgorithm: 'sm2',
           },
@@ -36,10 +35,8 @@ export function testUserRepository(
         const user = await repository.create(request);
 
         expect(user.id).toBeDefined();
-        expect(user.username).toBe('testuser');
-        expect(user.email).toBe('test@example.com');
-        expect(user.preferences.dailyNewCards).toBe(20);
-        expect(user.preferences.maxReviews).toBe(100);
+        expect(user.preferences.maxNewCardsPerDay).toBe(20);
+        expect(user.preferences.maxReviewsPerDay).toBe(100);
         expect(user.preferences.timezone).toBe('UTC');
         expect(user.preferences.defaultAlgorithm).toBe('sm2');
         expect(user.createdAt).toBeInstanceOf(Date);
@@ -47,16 +44,11 @@ export function testUserRepository(
       });
 
       it('should create a user with minimal fields and defaults', async () => {
-        const request: CreateUserRequest = {
-          username: 'minimaluser',
-          email: 'minimal@example.com',
-        };
+        const request: CreateUserRequest = {};
 
         const user = await repository.create(request);
 
         expect(user.id).toBeDefined();
-        expect(user.username).toBe('minimaluser');
-        expect(user.email).toBe('minimal@example.com');
         expect(user.preferences).toBeDefined();
         expect(user.createdAt).toBeInstanceOf(Date);
         expect(user.updatedAt).toBeInstanceOf(Date);
@@ -116,52 +108,9 @@ export function testUserRepository(
       });
     });
 
-    describe('findByEmail', () => {
-      it('should find existing user by email', async () => {
-        const created = await repository.create({
-          username: 'emailtest',
-          email: 'emailtest@example.com',
-        });
-
-        const found = await repository.findByEmail('emailtest@example.com');
-
-        expect(found).not.toBeNull();
-        expect(found!.id).toEqual(created.id);
-        expect(found!.email).toBe('emailtest@example.com');
-      });
-
-      it('should return null for non-existent email', async () => {
-        const found = await repository.findByEmail('nonexistent@example.com');
-        expect(found).toBeNull();
-      });
-    });
-
-    describe('findByUsername', () => {
-      it('should find existing user by username', async () => {
-        const created = await repository.create({
-          username: 'usernametest',
-          email: 'usernametest@example.com',
-        });
-
-        const found = await repository.findByUsername('usernametest');
-
-        expect(found).not.toBeNull();
-        expect(found!.id).toEqual(created.id);
-        expect(found!.username).toBe('usernametest');
-      });
-
-      it('should return null for non-existent username', async () => {
-        const found = await repository.findByUsername('nonexistent');
-        expect(found).toBeNull();
-      });
-    });
-
     describe('update', () => {
       it('should update user fields', async () => {
-        const created = await repository.create({
-          username: 'updatetest',
-          email: 'update@example.com',
-        });
+        const created = await repository.create({});
 
         // Small delay to ensure updatedAt is different
         await new Promise((resolve) => setTimeout(resolve, 10));
@@ -170,10 +119,10 @@ export function testUserRepository(
           username: 'updateduser',
           email: 'updated@example.com',
           preferences: {
-            dailyNewCards: 30,
-            maxReviews: 150,
+            maxNewCardsPerDay: 30,
+            maxReviewsPerDay: 150,
             timezone: 'EST',
-            defaultAlgorithm: 'sm4',
+            defaultAlgorithm: 'sm2',
           },
         };
 
@@ -182,7 +131,7 @@ export function testUserRepository(
         expect(updated.id).toEqual(created.id);
         expect(updated.username).toBe('updateduser');
         expect(updated.email).toBe('updated@example.com');
-        expect(updated.preferences.dailyNewCards).toBe(30);
+        expect(updated.preferences.maxNewCardsPerDay).toBe(30);
         expect(updated.preferences.defaultAlgorithm).toBe('sm4');
         expect(updated.updatedAt.getTime()).toBeGreaterThan(
           created.updatedAt.getTime(),

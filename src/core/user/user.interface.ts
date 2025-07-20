@@ -1,16 +1,13 @@
-export type UserId = string;
-
+// TODO: simplify, we don't need usernmae and email, this is going to be an api that other systems will use, they will link the id of the created user with other usersid, so need for this system to keep track of email nor username
 export interface UserPreferences {
-  readonly dailyNewCards: number;
-  readonly maxReviews: number;
+  readonly maxNewCardsPerDay: number;
+  readonly maxReviewsPerDay: number;
   readonly timezone: string;
-  readonly defaultAlgorithm: 'sm2' | 'sm4' | 'fsrs';
+  readonly defaultAlgorithm: 'sm2' | 'fsrs';
 }
 
 export interface User {
-  readonly id: UserId;
-  readonly username: string;
-  readonly email: string;
+  readonly id: string;
   readonly createdAt: Date;
   readonly updatedAt: Date;
   readonly preferences: UserPreferences;
@@ -37,30 +34,15 @@ export interface UserRepository {
   /**
    * Find a user by ID
    */
-  findById(id: UserId): Promise<User | null>;
-
-  /**
-   * Find a user by email
-   */
-  findByEmail(email: string): Promise<User | null>;
-
-  /**
-   * Find a user by username
-   */
-  findByUsername(username: string): Promise<User | null>;
+  findById(id: string): Promise<User | null>;
 
   /**
    * Update an existing user
    */
-  update(id: UserId, request: UpdateUserRequest): Promise<User>;
+  update(id: string, request: UpdateUserRequest): Promise<User>;
 
   /**
    * Delete a user
    */
-  delete(id: UserId): Promise<void>;
-
-  /**
-   * Check if a user exists
-   */
-  exists(id: UserId): Promise<boolean>;
+  delete(id: string): Promise<void>;
 }
