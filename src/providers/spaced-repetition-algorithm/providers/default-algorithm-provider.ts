@@ -1,8 +1,8 @@
-import { ISpacedRepetitionSchedulerService } from '../core/space-repetition-scheduler-service.interface';
+import { ISpacedRepetition } from '../core/space-repetition.interface';
 import {
   AlgorithmType,
   ISpacedRepetitionScheduler,
-} from '../core/spaced-repetition-algorithm.interface';
+} from '../core/spaced-repetition-scheduler.interface';
 import { SM2Scheduler } from './sm2/sm2-scheduler';
 
 /**
@@ -10,7 +10,7 @@ import { SM2Scheduler } from './sm2/sm2-scheduler';
  * Supports SM2 algorithm out of the box and allows registration of additional algorithms
  */
 export class DefaultSpacedRepetitionAlgorithmProvider
-  implements ISpacedRepetitionSchedulerService
+  implements ISpacedRepetition
 {
   private readonly schedulers = new Map<
     AlgorithmType,

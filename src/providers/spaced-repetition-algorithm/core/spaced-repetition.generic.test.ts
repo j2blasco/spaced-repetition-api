@@ -1,20 +1,20 @@
 import {
   AlgorithmType,
   RecallLevel,
-} from './spaced-repetition-algorithm.interface';
+} from './spaced-repetition-scheduler.interface';
 import { calculateInterval } from '../providers/scheduling-utils';
-import { ISpacedRepetitionSchedulerService } from './space-repetition-scheduler-service.interface';
+import { ISpacedRepetition } from './space-repetition.interface';
 
 /**
  * Generic test suite for SpacedRepetitionAlgorithmProvider implementations
  * This function tests any implementation of the SpacedRepetitionAlgorithmProvider interface
  */
 export function testSpacedRepetitionAlgorithmProvider(
-  createProvider: () => ISpacedRepetitionSchedulerService,
+  createProvider: () => ISpacedRepetition,
   availableAlgorithms: AlgorithmType[],
 ): void {
   describe('SpacedRepetitionAlgorithmProvider', () => {
-    let provider: ISpacedRepetitionSchedulerService;
+    let provider: ISpacedRepetition;
 
     beforeEach(() => {
       provider = createProvider();

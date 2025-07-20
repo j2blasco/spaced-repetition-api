@@ -1,9 +1,14 @@
 import { describe, it, expect } from '@jest/globals';
-import { InMemoryCardRepository } from './card.repository.memory';
+import { CardRepository } from './card.repository';
+import { NoSqlDatabaseTesting } from '@j2blasco/ts-crud';
+import { DefaultSpacedRepetitionAlgorithmProvider } from 'src/providers/spaced-repetition-algorithm/providers/default-algorithm-provider';
 
 describe('Simplified Card System', () => {
+  let db = new NoSqlDatabaseTesting();
+  let spaceRepetition = new DefaultSpacedRepetitionAlgorithmProvider();
+
   it('should create and find cards with tags', async () => {
-    const repository = new InMemoryCardRepository();
+    const repository = new CardRepository(db, spaceRepetition);
     const userId = 'user123';
 
     // Create a Spanish vocabulary card
@@ -35,7 +40,7 @@ describe('Simplified Card System', () => {
   });
 
   it('should support flexible data structures', async () => {
-    const repository = new InMemoryCardRepository();
+    const repository = new CardRepository(db, spaceRepetition);
     const userId = 'user123';
 
     // Create a math problem card
@@ -73,40 +78,10 @@ describe('Simplified Card System', () => {
     // Verify we can find by different tag combinations
     const mathCards = await repository.findByTags(userId, ['math']);
     const historyCards = await repository.findByTags(userId, ['history']);
-    
+
     expect(mathCards).toHaveLength(1);
     expect(historyCards).toHaveLength(1);
     expect(mathCards[0].id).toBe(mathCard.id);
     expect(historyCards[0].id).toBe(clozeCard.id);
-  });
-
-  it('should get card counts by tags', async () => {
-    const repository = new InMemoryCardRepository();
-    const userId = 'user123';
-
-    await repository.create({
-      userId,
-      tags: ['spanish', 'vocabulary'],
-      data: { front: 'Hello', back: 'Hola' },
-    });
-
-    await repository.create({
-      userId,
-      tags: ['spanish', 'grammar'],
-      data: { front: 'I am', back: 'Yo soy' },
-    });
-
-    await repository.create({
-      userId,
-      tags: ['french', 'vocabulary'],
-      data: { front: 'Hello', back: 'Bonjour' },
-    });
-
-    const counts = await repository.getCardCountsByTags(userId);
-    
-    expect(counts.spanish).toBe(2);
-    expect(counts.vocabulary).toBe(2);
-    expect(counts.grammar).toBe(1);
-    expect(counts.french).toBe(1);
   });
 });

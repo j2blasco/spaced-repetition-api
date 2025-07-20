@@ -4,7 +4,7 @@ import {
   RecallLevel,
   RescheduleRequest,
   ISpacedRepetitionScheduler,
-} from './spaced-repetition-algorithm.interface';
+} from './spaced-repetition-scheduler.interface';
 import {
   calculateInterval,
   calculateIntervalChange,

@@ -10,11 +10,11 @@ import {
   CreateCardRequest,
   Card,
 } from './card/card.interface';
-import { ISpacedRepetitionSchedulerService } from 'src/providers/spaced-repetition-algorithm/core/space-repetition-scheduler-service.interface';
+import { ISpacedRepetition } from 'src/providers/spaced-repetition-algorithm/core/space-repetition.interface';
 import {
   AlgorithmType,
   RecallLevel,
-} from 'src/providers/spaced-repetition-algorithm/core/spaced-repetition-algorithm.interface';
+} from 'src/providers/spaced-repetition-algorithm/core/spaced-repetition-scheduler.interface';
 import { ReviewResponse } from './review/review.interface';
 
 /**
@@ -23,7 +23,7 @@ import { ReviewResponse } from './review/review.interface';
 export class DefaultSpacedRepetitionService implements SpacedRepetitionService {
   constructor(
     private readonly cardRepository: ICardRepository,
-    private readonly algorithmProvider: ISpacedRepetitionSchedulerService,
+    private readonly algorithmProvider: ISpacedRepetition,
   ) {}
 
   async createCard(request: CreateCardRequest): Promise<Card> {

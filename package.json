@@ -13,7 +13,7 @@
     "@j2blasco/ts-crud": "^0.1.4",
     "@j2blasco/ts-env": "^0.0.3",
     "@j2blasco/ts-pipe": "^0.0.8",
-    "@j2blasco/ts-result": "^0.0.9",
+    "@j2blasco/ts-result": "^0.1.2",
     "cors": "^2.8.5",
     "express": "^5.1.0",
     "module-alias": "^2.2.3",

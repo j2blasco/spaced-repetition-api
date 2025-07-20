@@ -1,4 +1,4 @@
-import { AlgorithmType } from '../../core/spaced-repetition-algorithm.interface';
+import { AlgorithmType } from '../../core/spaced-repetition-scheduler.interface';
 import { testSpacedRepetitionScheduler } from '../../core/spaced-repetition-scheduler.generic.test';
 import { SM2Scheduler } from './sm2-scheduler';
 

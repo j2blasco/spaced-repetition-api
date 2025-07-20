@@ -1,5 +1,5 @@
-import { AlgorithmType } from '../core/spaced-repetition-algorithm.interface';
-import { testSpacedRepetitionAlgorithmProvider } from '../core/spaced-repetition-provider.generic.test';
+import { AlgorithmType } from '../core/spaced-repetition-scheduler.interface';
+import { testSpacedRepetitionAlgorithmProvider } from '../core/spaced-repetition.generic.test';
 import { DefaultSpacedRepetitionAlgorithmProvider } from './default-algorithm-provider';
 
 describe('DefaultSpacedRepetitionAlgorithmProvider', () => {

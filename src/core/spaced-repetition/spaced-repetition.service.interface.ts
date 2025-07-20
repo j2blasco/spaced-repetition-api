@@ -55,5 +55,8 @@ export interface SpacedRepetitionService {
   /**
    * Get cards due for review for a specific user with optional tag filtering
    */
-  getDueCards(userId: UserId, tags?: readonly string[]): Promise<readonly Card[]>;
+  getDueCards(
+    userId: UserId,
+    tags?: readonly string[],
+  ): Promise<readonly Card[]>;
 }

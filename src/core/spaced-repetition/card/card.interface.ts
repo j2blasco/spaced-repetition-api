@@ -1,4 +1,7 @@
-import { CardSchedulingData } from 'src/providers/spaced-repetition-algorithm/core/spaced-repetition-algorithm.interface';
+import {
+  AlgorithmType,
+  CardSchedulingData,
+} from 'src/providers/spaced-repetition-algorithm/core/spaced-repetition-scheduler.interface';
 import { UserId } from 'src/core/user/user.interface';
 
 export type Card = {
@@ -15,6 +18,7 @@ export interface CreateCardRequest {
   readonly userId: UserId;
   readonly tags?: readonly string[];
   readonly data: Record<string, unknown>;
+  readonly algorithmType: AlgorithmType;
 }
 
 export interface UpdateCardRequest {
@@ -64,19 +68,4 @@ export interface ICardRepository {
    * Delete a card
    */
   delete(id: string): Promise<void>;
-
-  /**
-   * Check if a card exists
-   */
-  exists(id: string): Promise<boolean>;
-
-  /**
-   * Get total card count for a user
-   */
-  getCardCount(userId: UserId): Promise<number>;
-
-  /**
-   * Get cards count by tags for a user
-   */
-  getCardCountsByTags(userId: UserId): Promise<Record<string, number>>;
 }

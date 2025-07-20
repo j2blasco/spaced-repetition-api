@@ -6,7 +6,7 @@ import {
   RescheduleRequest,
   RescheduleResponse,
   RecallLevel,
-} from '../../core/spaced-repetition-algorithm.interface';
+} from '../../core/spaced-repetition-scheduler.interface';
 import { updateSchedulingWithInterval } from '../scheduling-utils';
 import { SM2AlgorithmData } from './sm2-algorithm-data.interface';
 

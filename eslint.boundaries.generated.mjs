@@ -12,9 +12,7 @@ export default [
     },
     settings: {
       'boundaries/elements': [
-        { type: 'rest', pattern: 'src/api/rest' },
-        { type: 'common', pattern: 'src/common' },
-        { type: 'environment', pattern: 'src/environment' }
+        { type: 'rest', pattern: 'src/api/rest' }
       ] 
     },
     rules: {
@@ -24,8 +22,7 @@ export default [
         {
           default: 'disallow',
           rules: [
-            { from: 'rest', allow: ['express', 'cors'] },
-            { from: 'environment', allow: ['fs', 'os', 'path', 'crypto', 'url'] }
+            { from: 'rest', allow: ['express', 'cors'] }
           ]
         }
       ],

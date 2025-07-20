@@ -1,9 +1,9 @@
 import {
   AlgorithmType,
   ISpacedRepetitionScheduler,
-} from './spaced-repetition-algorithm.interface';
+} from './spaced-repetition-scheduler.interface';
 
-export interface ISpacedRepetitionSchedulerService {
+export interface ISpacedRepetition {
   /**
    * Get a scheduler for a specific algorithm type
    */
