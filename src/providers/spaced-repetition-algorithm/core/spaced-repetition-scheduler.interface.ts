@@ -15,13 +15,11 @@ export enum AlgorithmType {
 export type CardSchedulingData<TAlgorithmData = unknown> = {
   algorithmType: AlgorithmType;
   nextReviewDate: Date;
-  lastReviewDate?: Date;
   algorithmData: TAlgorithmData; // algorithm-specific parameters
 };
 
 export type ReviewResult = {
   recallLevel: RecallLevel;
-  responseTime?: number; // in seconds
   reviewedAt: Date;
 };
 

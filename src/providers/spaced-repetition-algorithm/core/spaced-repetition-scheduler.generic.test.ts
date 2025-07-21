@@ -63,7 +63,6 @@ export function testSpacedRepetitionScheduler(
           currentScheduling: baseSchedulingData,
           reviewResult: {
             recallLevel: RecallLevel.MEDIUM,
-            responseTime: 5.0,
             reviewedAt: new Date(),
           },
         };
@@ -109,7 +108,6 @@ export function testSpacedRepetitionScheduler(
             currentScheduling,
             reviewResult: {
               recallLevel: RecallLevel.EASY,
-              responseTime: 2.0,
               reviewedAt: new Date(),
             },
           };
@@ -157,7 +155,6 @@ export function testSpacedRepetitionScheduler(
             currentScheduling: currentData,
             reviewResult: {
               recallLevel: RecallLevel.EASY,
-              responseTime: 2.0,
               reviewedAt: new Date(),
             },
           };
@@ -170,7 +167,6 @@ export function testSpacedRepetitionScheduler(
           currentScheduling: currentData,
           reviewResult: {
             recallLevel: RecallLevel.HARD,
-            responseTime: 15.0,
             reviewedAt: new Date(),
           },
         };
@@ -288,7 +284,6 @@ export function testSpacedRepetitionScheduler(
           currentScheduling: data,
           reviewResult: {
             recallLevel: RecallLevel.MEDIUM,
-            responseTime: 5.0,
             reviewedAt: new Date('2023-01-01T10:00:00Z'),
           },
         };

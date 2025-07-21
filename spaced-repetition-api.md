@@ -8,26 +8,16 @@ This document describes the REST API architecture for a spaced repetition servic
 
 ### 1. User
 - Represents a registered user of the system
-- Has authentication credentials and profile information
-- Can own multiple decks
+- Has preferences for daily study limits and algorithm choice
+- Can own multiple cards organized by tags
 
-### 2. Deck
-- A collection of cards organized by topic or subject
-- Can be shared between users or kept private
-- Contains metadata like name, description, tags, and creation date
-
-### 3. Card
-- The fundamental unit of study containing a question and answer
-- Belongs to a deck
+### 2. Card
+- The fundamental unit of study containing question/answer data
+- Belongs to a user and can be organized using tags
 - Has associated scheduling data for spaced repetition
-- Supports multiple card types (basic, cloze, reverse, etc.)
+- Contains custom data fields for flexible content
 
-### 4. Note
-- The raw content that generates one or more cards
-- Contains fields that map to card templates
-- Allows for flexible card generation from structured data
-
-### 5. Review
+### 3. Review
 - Records user response to a card (again, hard, good, easy)
 - Updates card's next review date using spaced repetition algorithm
 - Tracks performance metrics and timing
@@ -38,50 +28,14 @@ This document describes the REST API architecture for a spaced repetition servic
 ```json
 {
   "id": "string (UUID)",
-  "username": "string",
-  "email": "string",
   "createdAt": "datetime",
   "updatedAt": "datetime",
   "preferences": {
-    "dailyNewCards": "number",
-    "maxReviews": "number",
+    "maxNewCardsPerDay": "number",
+    "maxReviewsPerDay": "number",
     "timezone": "string",
-    "defaultAlgorithm": "sm2|sm4|fsrs"
+    "defaultAlgorithm": "sm2|fsrs"
   }
-}
-```
-
-### Deck
-```json
-{
-  "id": "string (UUID)",
-  "userId": "string (UUID)",
-  "name": "string",
-  "description": "string",
-  "tags": ["string"],
-  "isPublic": "boolean",
-  "defaultAlgorithm": "sm2|sm4|fsrs",
-  "createdAt": "datetime",
-  "updatedAt": "datetime",
-  "cardCount": "number",
-  "newCardsToday": "number",
-  "reviewsToday": "number"
-}
-```
-
-### Note
-```json
-{
-  "id": "string (UUID)",
-  "deckId": "string (UUID)",
-  "fields": {
-    "front": "string (HTML/Markdown)",
-    "back": "string (HTML/Markdown)",
-    "extra": "string (HTML/Markdown)"
-  },
-  "tags": ["string"],
-  "createdAt": "datetime",
-  "updatedAt": "datetime"
 }
 ```
 
@@ -89,19 +43,12 @@ This document describes the REST API architecture for a spaced repetition servic
 ```json
 {
   "id": "string (UUID)",
-  "noteId": "string (UUID)",
-  "deckId": "string (UUID)",
-  "cardType": "basic|reverse|cloze",
-  "front": "string (HTML/Markdown)",
-  "back": "string (HTML/Markdown)",
+  "userId": "string (UUID)",
+  "tags": ["string"],
+  "data": "object (any JSON structure for card content)",
   "scheduling": {
-    "algorithm": "sm2|sm4|fsrs",
-    "interval": "number (days)",
-    "repetitions": "number",
-    "easeFactor": "number (1.3-2.5)",
+    "algorithmType": "sm2|fsrs",
     "nextReviewDate": "datetime",
-    "lastReviewDate": "datetime",
-    "cardState": "new|learning|review|relearning",
     "algorithmData": "object (algorithm-specific parameters)"
   },
   "createdAt": "datetime",
@@ -115,49 +62,26 @@ This document describes the REST API architecture for a spaced repetition servic
   "id": "string (UUID)",
   "cardId": "string (UUID)",
   "userId": "string (UUID)",
-  "response": "again|hard|good|easy",
-  "responseTime": "number (seconds)",
-  "reviewedAt": "datetime",
-  "previousInterval": "number",
-  "newInterval": "number"
+  "response": "again|hard|good|easy"
 }
 ```
 
 ## API Endpoints
 
-### Authentication
+### Users
 ```
-POST   /api/auth/register
-POST   /api/auth/login
-POST   /api/auth/logout
-POST   /api/auth/refresh
-```
-
-### Decks
-```
-GET    /api/decks                    # List user's decks
-POST   /api/decks                    # Create new deck
-GET    /api/decks/{id}               # Get deck details
-PUT    /api/decks/{id}               # Update deck
-DELETE /api/decks/{id}               # Delete deck
-GET    /api/decks/public             # Browse public decks
-POST   /api/decks/{id}/clone         # Clone a public deck
-```
-
-### Notes
-```
-GET    /api/decks/{deckId}/notes     # List notes in deck
-POST   /api/decks/{deckId}/notes     # Create new note
-GET    /api/notes/{id}               # Get note details
-PUT    /api/notes/{id}               # Update note
-DELETE /api/notes/{id}               # Delete note
+POST   /api/users                    # Create new user
+GET    /api/users/{id}               # Get user details
+PUT    /api/users/{id}               # Update user preferences
+DELETE /api/users/{id}               # Delete user
 ```
 
 ### Cards
 ```
-GET    /api/decks/{deckId}/cards     # List cards in deck
+GET    /api/cards                    # List user's cards (with filtering by tags, due status)
+POST   /api/cards                    # Create new card
 GET    /api/cards/{id}               # Get card details
-PUT    /api/cards/{id}               # Update card (manual scheduling)
+PUT    /api/cards/{id}               # Update card content
 DELETE /api/cards/{id}               # Delete card
 GET    /api/cards/due                # Get cards due for review
 POST   /api/cards/{id}/review        # Submit card review (updates scheduling)
@@ -165,7 +89,7 @@ POST   /api/cards/{id}/review        # Submit card review (updates scheduling)
 
 ## Spaced Repetition Algorithm
 
-The API supports multiple spaced repetition algorithms internally, with SM-2 as the default. While the system is designed to handle different algorithms (SM-2, SM-4, FSRS), algorithm selection and switching are not exposed through API endpoints in the current version.
+The API supports multiple spaced repetition algorithms internally, with SM-2 as the default. Algorithm selection is configured per user in their preferences.
 
 ### Currently Supported Algorithms
 
