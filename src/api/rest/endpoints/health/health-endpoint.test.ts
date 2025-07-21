@@ -112,7 +112,8 @@ describe('Health endpoint', () => {
   describe('Error scenarios', () => {
     it('should handle malformed URL paths gracefully', async () => {
       await request(app).get('/api/health/extra').expect(404);
-      await request(app).get('/api/health/').expect(404);
+      // Note: Express treats /api/health/ the same as /api/health by default
+      await request(app).get('/api/health/').expect(200);
     });
 
     it('should handle query parameters gracefully', async () => {

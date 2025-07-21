@@ -1,2 +1,2 @@
-* Add reference endpoin tests (health)
-* Let's implement the rest endpoints. To test them, we will use supertest. We'll setup the endpoints making use of startRestApiServer and then call the endpoint using supertest. 
+* tsup for build
+* add infra

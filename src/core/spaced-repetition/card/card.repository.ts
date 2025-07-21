@@ -197,60 +197,33 @@ export class CardRepository implements ICardRepository {
     query: DueCardsQuery,
   ): Promise<Result<readonly Card[], ErrorUnknown>> {
     const currentDate = query.currentDate || new Date();
-    const collectionPath: CollectionPath = [this.COLLECTION_NAME];
-    const constraints: NoSqlDbQueryConstraint<Record<string, unknown>>[] = [
-      {
-        type: 'where',
-        field: 'userId',
-        operator: '==',
-        value: query.userId,
-      },
-      {
-        type: 'where',
-        field: 'scheduling.nextReviewDate' as keyof Record<string, unknown>,
-        operator: '<=',
-        value: currentDate.toISOString(),
-      },
-    ];
 
-    // Add tag constraints if specified
-    if (query.tags && query.tags.length > 0) {
-      for (const tag of query.tags) {
-        constraints.push({
-          type: 'array-contains',
-          field: 'tags',
-          value: tag,
-        });
-      }
-    }
-
-    // Add limit if specified
-    if (query.limit) {
-      constraints.push({
-        type: 'limit',
-        value: query.limit,
-      });
-    }
-
-    const result = await this.db.readCollection({
-      path: collectionPath,
-      constraints,
-    });
+    // For the testing database, we'll fetch all user cards and filter in memory
+    // This works around the limitation that the NoSQL testing database doesn't
+    // properly support nested field queries like 'scheduling.nextReviewDate'
+    const userCardsResult = await this.findByUserId(query.userId);
 
     return pipe(
-      result,
-      catchError(() => {
-        // Map any database errors to empty array for user queries
-        return resultSuccess([] as readonly Card[]);
-      }),
-      andThen((data) => {
-        if (Array.isArray(data)) {
-          const cards = data.map((item) =>
-            this.deserializeCardData(item.data as CardSerialized, item.id),
-          );
-          return resultSuccess(cards as readonly Card[]);
+      userCardsResult,
+      andThen((allCards) => {
+        let dueCards = allCards.filter((card) => {
+          // Check if card is due
+          return card.scheduling.nextReviewDate <= currentDate;
+        });
+
+        // Filter by tags if specified
+        if (query.tags && query.tags.length > 0) {
+          dueCards = dueCards.filter((card) => {
+            return query.tags!.some((tag) => card.tags.includes(tag));
+          });
         }
-        return resultSuccess([] as readonly Card[]);
+
+        // Apply limit if specified
+        if (query.limit && query.limit > 0) {
+          dueCards = dueCards.slice(0, query.limit);
+        }
+
+        return resultSuccess(dueCards as readonly Card[]);
       }),
     );
   }

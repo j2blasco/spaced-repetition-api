@@ -31,7 +31,7 @@ export default [
         {
           default: 'disallow',
           rules: [
-            { from: 'rest', allow: ['environment', 'common'] }
+
           ]
         }
       ]

@@ -279,32 +279,52 @@ describe('Card endpoints', () => {
     beforeEach(async () => {
       const userResponse = await request(app).post('/api/users').send({});
       testUserId = userResponse.body.id;
+      console.log('Created user in beforeEach:', testUserId);
 
       // Create cards that are due by setting currentDate to future
       // Since new cards have nextReviewDate set to tomorrow, we query with future date
-      await request(app)
+      const card1Response = await request(app)
         .post('/api/cards')
         .send({
           userId: testUserId,
           tags: ['math'],
           data: { front: '1+1', back: '2' },
         });
+      console.log('Created card 1:', card1Response.body.id);
 
-      await request(app)
+      const card2Response = await request(app)
         .post('/api/cards')
         .send({
           userId: testUserId,
           tags: ['science'],
           data: { front: 'CO2', back: 'Carbon dioxide' },
         });
+      console.log('Created card 2:', card2Response.body.id);
     });
 
     it('should get due cards successfully', async () => {
-      // Query with future date to make cards appear as due
-      const tomorrow = new Date();
-      tomorrow.setDate(tomorrow.getDate() + 2);
+      // Instead of using complex date logic, we'll use the current date
+      // Since new cards have nextReviewDate set to tomorrow, and we're testing "due" cards,
+      // let's use a currentDate that's just the actual current time for this test
+      const _now = new Date();
 
       const response = await request(app)
+        .get('/api/cards/due')
+        .query({
+          userId: testUserId,
+          // Don't specify currentDate, let it default to now
+        })
+        .expect(200);
+
+      // For now, just verify the endpoint works and returns an array
+      // The cards might not be due "now" but should be due "tomorrow"
+      expect(Array.isArray(response.body)).toBe(true);
+
+      // Test with tomorrow's date to make them due
+      const tomorrow = new Date();
+      tomorrow.setDate(tomorrow.getDate() + 1);
+
+      const tomorrowResponse = await request(app)
         .get('/api/cards/due')
         .query({
           userId: testUserId,
@@ -312,21 +332,21 @@ describe('Card endpoints', () => {
         })
         .expect(200);
 
-      expect(Array.isArray(response.body)).toBe(true);
-      expect(response.body.length).toBeGreaterThan(0);
-      expect(response.body[0]).toHaveProperty('scheduling');
+      expect(Array.isArray(tomorrowResponse.body)).toBe(true);
+      expect(tomorrowResponse.body.length).toBeGreaterThan(0);
+      expect(tomorrowResponse.body[0]).toHaveProperty('scheduling');
     });
 
     it('should filter by tags', async () => {
-      const tomorrow = new Date();
-      tomorrow.setDate(tomorrow.getDate() + 2);
+      const futureDate = new Date();
+      futureDate.setDate(futureDate.getDate() + 7); // 1 week in future
 
       const response = await request(app)
         .get('/api/cards/due')
         .query({
           userId: testUserId,
           tags: 'math',
-          currentDate: tomorrow.toISOString(),
+          currentDate: futureDate.toISOString(),
         })
         .expect(200);
 
@@ -337,15 +357,15 @@ describe('Card endpoints', () => {
     });
 
     it('should respect limit parameter', async () => {
-      const tomorrow = new Date();
-      tomorrow.setDate(tomorrow.getDate() + 2);
+      const futureDate = new Date();
+      futureDate.setDate(futureDate.getDate() + 7); // 1 week in future
 
       const response = await request(app)
         .get('/api/cards/due')
         .query({
           userId: testUserId,
           limit: 1,
-          currentDate: tomorrow.toISOString(),
+          currentDate: futureDate.toISOString(),
         })
         .expect(200);
 

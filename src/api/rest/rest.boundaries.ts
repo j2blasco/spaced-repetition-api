@@ -2,7 +2,7 @@ import type { Boundaries } from '@j2blasco/ts-boundaries';
 
 const boundaries: Boundaries = {
   name: 'rest',
-  internal: ['environment', 'common'],
+  internal: [],
   external: ['express', 'cors', 'supertest'],
 };
 
