@@ -2,6 +2,7 @@ import { describe, it, expect } from '@jest/globals';
 import { CardRepository } from './card.repository';
 import { NoSqlDatabaseTesting } from '@j2blasco/ts-crud';
 import { DefaultSpacedRepetitionAlgorithmProvider } from 'src/providers/spaced-repetition-algorithm/providers/default-algorithm-provider';
+import { AlgorithmType } from 'src/providers/spaced-repetition-algorithm/core/spaced-repetition-scheduler.interface';
 
 describe('Simplified Card System', () => {
   let db = new NoSqlDatabaseTesting();
@@ -20,6 +21,7 @@ describe('Simplified Card System', () => {
         back: 'Hola',
         cardType: 'basic',
       },
+      algorithmType: AlgorithmType.SM2,
     });
 
     expect(card.id).toBeDefined();
@@ -54,6 +56,7 @@ describe('Simplified Card System', () => {
         cardType: 'problem',
         difficulty: 'medium',
       },
+      algorithmType: AlgorithmType.SM2,
     });
 
     expect(mathCard.data.problem).toBe('Solve: x² + 5x + 6 = 0');
@@ -70,6 +73,7 @@ describe('Simplified Card System', () => {
         field: 'c1',
         answer: '1945',
       },
+      algorithmType: AlgorithmType.SM2,
     });
 
     expect(clozeCard.data.text).toBe('World War II ended in {{c1::1945}}');

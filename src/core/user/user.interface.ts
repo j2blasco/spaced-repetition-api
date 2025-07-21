@@ -1,4 +1,7 @@
-// TODO: simplify, we don't need usernmae and email, this is going to be an api that other systems will use, they will link the id of the created user with other usersid, so need for this system to keep track of email nor username
+import { Result } from '@j2blasco/ts-result';
+
+export type UserId = string;
+
 export interface UserPreferences {
   readonly maxNewCardsPerDay: number;
   readonly maxReviewsPerDay: number;
@@ -7,21 +10,17 @@ export interface UserPreferences {
 }
 
 export interface User {
-  readonly id: string;
+  readonly id: UserId;
   readonly createdAt: Date;
   readonly updatedAt: Date;
   readonly preferences: UserPreferences;
 }
 
 export interface CreateUserRequest {
-  readonly username: string;
-  readonly email: string;
   readonly preferences?: Partial<UserPreferences>;
 }
 
 export interface UpdateUserRequest {
-  readonly username?: string;
-  readonly email?: string;
   readonly preferences?: Partial<UserPreferences>;
 }
 
@@ -29,20 +28,20 @@ export interface UserRepository {
   /**
    * Create a new user
    */
-  create(request: CreateUserRequest): Promise<User>;
+  create(request: CreateUserRequest): Promise<Result<User, string>>;
 
   /**
    * Find a user by ID
    */
-  findById(id: string): Promise<User | null>;
+  findById(id: UserId): Promise<Result<User | null, string>>;
 
   /**
    * Update an existing user
    */
-  update(id: string, request: UpdateUserRequest): Promise<User>;
+  update(id: UserId, request: UpdateUserRequest): Promise<Result<User, string>>;
 
   /**
    * Delete a user
    */
-  delete(id: string): Promise<void>;
+  delete(id: UserId): Promise<Result<void, string>>;
 }
