@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Subject } from 'rxjs';
 
 export class InjectToken<_T> {

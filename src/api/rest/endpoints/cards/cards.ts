@@ -14,7 +14,7 @@ const cardService = new CardService();
 // GET /api/cards - List user's cards (with filtering by tags, due status)
 async function handleListCards(req: Request, res: Response) {
   const userId = req.query.userId as string;
-  
+
   if (!userId) {
     res.status(400).json({
       error: {
@@ -113,7 +113,7 @@ async function handleDeleteCard(req: Request, res: Response) {
 // GET /api/cards/due - Get cards due for review
 async function handleGetDueCards(req: Request, res: Response) {
   const userId = req.query.userId as string;
-  
+
   if (!userId) {
     res.status(400).json({
       error: {
