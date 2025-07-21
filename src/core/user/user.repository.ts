@@ -7,7 +7,7 @@ import {
   User,
   CreateUserRequest,
   UpdateUserRequest,
-  UserRepository,
+  IUserRepository,
   UserId,
   UserPreferences,
 } from './user.interface';
@@ -36,7 +36,7 @@ type UserSerialized = {
   updatedAt: string;
 };
 
-export class NoSqlUserRepository implements UserRepository {
+export class UserRepository implements IUserRepository {
   private readonly COLLECTION_NAME = 'users';
 
   constructor(private db: INoSqlDatabase) {}

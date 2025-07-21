@@ -29,7 +29,7 @@ export interface UpdateUserRequest {
   readonly preferences?: Partial<UserPreferences>;
 }
 
-export interface UserRepository {
+export interface IUserRepository {
   /**
    * Create a new user
    */

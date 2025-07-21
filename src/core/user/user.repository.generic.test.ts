@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from '@jest/globals';
 import {
-  UserRepository,
+  IUserRepository,
   CreateUserRequest,
   UpdateUserRequest,
   UserPreferences,
@@ -11,10 +11,10 @@ import {
  * Any implementation of UserRepository should pass these tests
  */
 export function testUserRepository(
-  createUserRepository: () => Promise<UserRepository>,
+  createUserRepository: () => Promise<IUserRepository>,
 ) {
   describe('UserRepository', () => {
-    let repository: UserRepository;
+    let repository: IUserRepository;
 
     beforeEach(async () => {
       repository = await createUserRepository();
