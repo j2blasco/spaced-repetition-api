@@ -12,7 +12,7 @@ export function calculateInterval<TAlgorithmData>(
   schedulingData: CardSchedulingData<TAlgorithmData>,
   fromDate?: Date,
 ): number {
-  const baseDate = fromDate || schedulingData.lastReviewDate || new Date();
+  const baseDate = fromDate || new Date();
   const timeDiff = schedulingData.nextReviewDate.getTime() - baseDate.getTime();
   return Math.max(0, Math.ceil(timeDiff / (1000 * 60 * 60 * 24))); // Convert to days
 }
@@ -69,6 +69,5 @@ export function updateSchedulingWithInterval<TAlgorithmData>(
   return {
     ...schedulingData,
     nextReviewDate,
-    lastReviewDate: reviewDate,
   };
 }

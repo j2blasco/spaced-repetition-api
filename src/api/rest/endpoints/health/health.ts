@@ -1,12 +1,12 @@
 import { Express, Request, Response } from 'express';
 
-export const healthEndpointRoute = '/rest/health';
+export const healthEndpointRoute = '/api/health';
 
 function handleHealthEndpoint(_req: Request, res: Response) {
   res.json({
     status: 'ok',
     timestamp: new Date().toISOString(),
-    service: 'spaced-repetition-api',
+    version: process.env.npm_package_version || '1.0.0',
   });
 }
 

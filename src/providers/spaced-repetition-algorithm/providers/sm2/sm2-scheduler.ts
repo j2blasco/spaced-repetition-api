@@ -45,7 +45,6 @@ export class SM2Scheduler
     return {
       algorithmType: data.algorithmType,
       nextReviewDate: data.nextReviewDate.toISOString(),
-      lastReviewDate: data.lastReviewDate?.toISOString() || null,
       algorithmData: {
         efactor: data.algorithmData.efactor,
         repetition: data.algorithmData.repetition,
@@ -67,9 +66,6 @@ export class SM2Scheduler
     return {
       algorithmType: data.algorithmType as AlgorithmType,
       nextReviewDate: new Date(data.nextReviewDate as string),
-      lastReviewDate: data.lastReviewDate
-        ? new Date(data.lastReviewDate as string)
-        : undefined,
       algorithmData: {
         efactor: algorithmData.efactor,
         repetition: algorithmData.repetition,
@@ -154,7 +150,6 @@ export class SM2Scheduler
     return {
       algorithmType: this.algorithmType,
       nextReviewDate: data.nextReviewDate,
-      lastReviewDate: data.lastReviewDate,
       algorithmData: {
         efactor: 2.5, // Default ease factor
         repetition: 1, // Assume some progress was made

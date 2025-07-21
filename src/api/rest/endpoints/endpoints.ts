@@ -1,7 +1,7 @@
 import { Express } from 'express';
-import { setupHealthEndpoint } from './health/health.js';
-import { setupUsersEndpoints } from './users/users.js';
-import { setupCardsEndpoints } from './cards/cards.js';
+import { setupHealthEndpoint } from './health/health';
+import { setupUsersEndpoints } from './users/users';
+import { setupCardsEndpoints } from './cards/cards';
 
 export function setupEndpoints(app: Express) {
   setupHealthEndpoint(app);
