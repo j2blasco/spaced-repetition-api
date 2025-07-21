@@ -1,4 +1,9 @@
-import { Result } from '@j2blasco/ts-result';
+import {
+  ErrorUnknown,
+  ErrorWithCode,
+  Result,
+  SuccessVoid,
+} from '@j2blasco/ts-result';
 
 export type UserId = string;
 
@@ -28,20 +33,23 @@ export interface UserRepository {
   /**
    * Create a new user
    */
-  create(request: CreateUserRequest): Promise<Result<User, string>>;
+  create(request: CreateUserRequest): Promise<Result<User, ErrorUnknown>>;
 
   /**
    * Find a user by ID
    */
-  findById(id: UserId): Promise<Result<User | null, string>>;
+  findById(id: UserId): Promise<Result<User | null, ErrorUnknown>>;
 
   /**
    * Update an existing user
    */
-  update(id: UserId, request: UpdateUserRequest): Promise<Result<User, string>>;
+  update(
+    id: UserId,
+    request: UpdateUserRequest,
+  ): Promise<Result<User, ErrorWithCode<'not-found'> | ErrorUnknown>>;
 
   /**
    * Delete a user
    */
-  delete(id: UserId): Promise<Result<void, string>>;
+  delete(id: UserId): Promise<Result<SuccessVoid, ErrorUnknown>>;
 }

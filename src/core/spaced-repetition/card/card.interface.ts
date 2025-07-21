@@ -1,4 +1,10 @@
 import {
+  ErrorUnknown,
+  ErrorWithCode,
+  Result,
+  SuccessVoid,
+} from '@j2blasco/ts-result';
+import {
   AlgorithmType,
   CardSchedulingData,
 } from 'src/providers/spaced-repetition-algorithm/core/spaced-repetition-scheduler.interface';
@@ -37,35 +43,47 @@ export interface ICardRepository {
   /**
    * Create a new card
    */
-  create(request: CreateCardRequest): Promise<Card>;
+  create(request: CreateCardRequest): Promise<Result<Card, ErrorUnknown>>;
 
   /**
    * Find a card by ID
    */
-  findById(id: string): Promise<Card | null>;
+  findById(
+    id: string,
+  ): Promise<Result<Card, ErrorWithCode<'not-found'> | ErrorUnknown>>;
 
   /**
    * Find all cards for a user
    */
-  findByUserId(userId: UserId): Promise<readonly Card[]>;
+  findByUserId(userId: UserId): Promise<Result<readonly Card[], ErrorUnknown>>;
 
   /**
    * Find cards by tags (supports partial matching)
    */
-  findByTags(userId: UserId, tags: readonly string[]): Promise<readonly Card[]>;
+  findByTags(
+    userId: UserId,
+    tags: readonly string[],
+  ): Promise<Result<readonly Card[], ErrorUnknown>>;
 
   /**
    * Find cards that are due for review
    */
-  findDueCards(query: DueCardsQuery): Promise<readonly Card[]>;
+  findDueCards(
+    query: DueCardsQuery,
+  ): Promise<Result<readonly Card[], ErrorUnknown>>;
 
   /**
    * Update an existing card
    */
-  update(id: string, request: UpdateCardRequest): Promise<Card>;
+  update(
+    id: string,
+    request: UpdateCardRequest,
+  ): Promise<Result<Card, ErrorWithCode<'not-found'> | ErrorUnknown>>;
 
   /**
    * Delete a card
    */
-  delete(id: string): Promise<void>;
+  delete(
+    id: string,
+  ): Promise<Result<SuccessVoid, ErrorWithCode<'not-found'> | ErrorUnknown>>;
 }

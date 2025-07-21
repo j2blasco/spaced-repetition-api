@@ -16,6 +16,19 @@ import {
 import type { UserId } from 'src/core/user/user.interface';
 import { AlgorithmType } from 'src/providers/spaced-repetition-algorithm/core/spaced-repetition-scheduler.interface';
 import { ISpacedRepetition } from 'src/providers/spaced-repetition-algorithm/core/space-repetition.interface';
+import {
+  Result,
+  resultSuccess,
+  resultError,
+  ErrorUnknown,
+  ErrorWithCode,
+  andThen,
+  andThenAsync,
+  catchError,
+  resultSuccessVoid,
+  SuccessVoid,
+} from '@j2blasco/ts-result';
+import { asyncPipe, pipe } from '@j2blasco/ts-pipe';
 
 type CardSerialized = {
   userId: string;
@@ -39,7 +52,9 @@ export class CardRepository implements ICardRepository {
     private spacedRepetition: ISpacedRepetition,
   ) {}
 
-  async create(request: CreateCardRequest): Promise<Card> {
+  async create(
+    request: CreateCardRequest,
+  ): Promise<Result<Card, ErrorUnknown>> {
     const now = new Date();
     const scheduler = this.spacedRepetition.getScheduler(request.algorithmType);
     const defaultScheduling = scheduler.initializeCard();
@@ -61,49 +76,44 @@ export class CardRepository implements ICardRepository {
     const collectionPath: CollectionPath = [this.COLLECTION_NAME];
     const result = await this.db.addToCollection(collectionPath, cardData);
 
-    const createdDocument = result.unwrapOrThrow((error) => {
-      throw new Error(`Failed to create card: ${this.getErrorMessage(error)}`);
-    });
-
-    return {
-      id: createdDocument.id,
-      userId: request.userId,
-      tags: request.tags || [],
-      data: request.data,
-      scheduling: defaultScheduling,
-      createdAt: now,
-      updatedAt: now,
-    };
+    return pipe(
+      result,
+      andThen((createdDocument: { id: string }) => {
+        const card: Card = {
+          id: createdDocument.id,
+          userId: request.userId,
+          tags: request.tags || [],
+          data: request.data,
+          scheduling: defaultScheduling,
+          createdAt: now,
+          updatedAt: now,
+        };
+        return resultSuccess(card);
+      }),
+    );
   }
 
-  async findById(id: string): Promise<Card | null> {
+  async findById(
+    id: string,
+  ): Promise<Result<Card, ErrorWithCode<'not-found'> | ErrorUnknown>> {
     const documentPath: DocumentPath = [this.COLLECTION_NAME, id];
     const result = await this.db.readDocument(documentPath);
 
-    try {
-      const data = result.unwrapOrThrow((error) => {
-        if (this.isNotFoundError(error)) {
-          return null;
+    return pipe(
+      result,
+      andThen((data) => {
+        if (data === null) {
+          return resultError.withCode('not-found' as const);
         }
-        throw new Error(
-          `Failed to find card by id: ${this.getErrorMessage(error)}`,
-        );
-      });
-
-      if (data === null) {
-        return null;
-      }
-
-      return this.deserializeCardData(data as CardSerialized, id);
-    } catch (error) {
-      if (error instanceof Error && error.message === 'not-found') {
-        return null;
-      }
-      throw error;
-    }
+        const card = this.deserializeCardData(data as CardSerialized, id);
+        return resultSuccess(card);
+      }),
+    );
   }
 
-  async findByUserId(userId: UserId): Promise<readonly Card[]> {
+  async findByUserId(
+    userId: UserId,
+  ): Promise<Result<readonly Card[], ErrorUnknown>> {
     const collectionPath: CollectionPath = [this.COLLECTION_NAME];
     const constraints: NoSqlDbQueryConstraint<CardSerialized>[] = [
       {
@@ -119,32 +129,28 @@ export class CardRepository implements ICardRepository {
       constraints,
     });
 
-    try {
-      const data = result.unwrapOrThrow((error) => {
-        if (this.isNotFoundError(error)) {
-          return [];
+    return pipe(
+      result,
+      catchError(() => {
+        // Map any database errors (including not-found) to empty array for user queries
+        return resultSuccess([] as readonly Card[]);
+      }),
+      andThen((data) => {
+        if (Array.isArray(data)) {
+          const cards = data.map((item) =>
+            this.deserializeCardData(item.data, item.id),
+          );
+          return resultSuccess(cards as readonly Card[]);
         }
-        throw new Error(
-          `Failed to find cards by user id: ${this.getErrorMessage(error)}`,
-        );
-      });
-
-      if (Array.isArray(data)) {
-        return data.map((item) => this.deserializeCardData(item.data, item.id));
-      }
-      return [];
-    } catch (error) {
-      if (error instanceof Error && error.message === 'not-found') {
-        return [];
-      }
-      throw error;
-    }
+        return resultSuccess([] as readonly Card[]);
+      }),
+    );
   }
 
   async findByTags(
     userId: UserId,
     tags: readonly string[],
-  ): Promise<readonly Card[]> {
+  ): Promise<Result<readonly Card[], ErrorUnknown>> {
     const collectionPath: CollectionPath = [this.COLLECTION_NAME];
     const constraints: NoSqlDbQueryConstraint<CardSerialized>[] = [
       {
@@ -169,29 +175,27 @@ export class CardRepository implements ICardRepository {
       constraints,
     });
 
-    try {
-      const data = result.unwrapOrThrow((error) => {
-        if (this.isNotFoundError(error)) {
-          return [];
+    return pipe(
+      result,
+      catchError(() => {
+        // Map any database errors to empty array for user queries
+        return resultSuccess([] as readonly Card[]);
+      }),
+      andThen((data) => {
+        if (Array.isArray(data)) {
+          const cards = data.map((item) =>
+            this.deserializeCardData(item.data, item.id),
+          );
+          return resultSuccess(cards as readonly Card[]);
         }
-        throw new Error(
-          `Failed to find cards by tags: ${this.getErrorMessage(error)}`,
-        );
-      });
-
-      if (Array.isArray(data)) {
-        return data.map((item) => this.deserializeCardData(item.data, item.id));
-      }
-      return [];
-    } catch (error) {
-      if (error instanceof Error && error.message === 'not-found') {
-        return [];
-      }
-      throw error;
-    }
+        return resultSuccess([] as readonly Card[]);
+      }),
+    );
   }
 
-  async findDueCards(query: DueCardsQuery): Promise<readonly Card[]> {
+  async findDueCards(
+    query: DueCardsQuery,
+  ): Promise<Result<readonly Card[], ErrorUnknown>> {
     const currentDate = query.currentDate || new Date();
     const collectionPath: CollectionPath = [this.COLLECTION_NAME];
     const constraints: NoSqlDbQueryConstraint<Record<string, unknown>>[] = [
@@ -233,86 +237,95 @@ export class CardRepository implements ICardRepository {
       constraints,
     });
 
-    try {
-      const data = result.unwrapOrThrow((error) => {
-        if (this.isNotFoundError(error)) {
-          return [];
+    return pipe(
+      result,
+      catchError(() => {
+        // Map any database errors to empty array for user queries
+        return resultSuccess([] as readonly Card[]);
+      }),
+      andThen((data) => {
+        if (Array.isArray(data)) {
+          const cards = data.map((item) =>
+            this.deserializeCardData(item.data as CardSerialized, item.id),
+          );
+          return resultSuccess(cards as readonly Card[]);
         }
-        throw new Error(
-          `Failed to find due cards: ${this.getErrorMessage(error)}`,
-        );
-      });
-
-      if (Array.isArray(data)) {
-        return data.map((item) =>
-          this.deserializeCardData(item.data as CardSerialized, item.id),
-        );
-      }
-      return [];
-    } catch (error) {
-      if (error instanceof Error && error.message === 'not-found') {
-        return [];
-      }
-      throw error;
-    }
+        return resultSuccess([] as readonly Card[]);
+      }),
+    );
   }
 
-  async update(id: string, request: UpdateCardRequest): Promise<Card> {
-    // First, get the existing card
-    const existingCard = await this.findById(id);
-    if (!existingCard) {
-      throw new Error(`Card with id ${id} not found`);
-    }
+  async update(
+    id: string,
+    request: UpdateCardRequest,
+  ): Promise<Result<Card, ErrorWithCode<'not-found'> | ErrorUnknown>> {
+    const existingCardResult = await this.findById(id);
 
-    // Prepare updated data
-    const updatedTags =
-      request.tags !== undefined ? request.tags : existingCard.tags;
-    const updatedData =
-      request.data !== undefined ? request.data : existingCard.data;
-    const now = new Date();
+    return await asyncPipe(
+      existingCardResult,
+      andThenAsync(async (existingCard) => {
+        // Prepare updated data
+        const updatedTags =
+          request.tags !== undefined ? request.tags : existingCard.tags;
+        const updatedData =
+          request.data !== undefined ? request.data : existingCard.data;
+        const now = new Date();
 
-    // Use the scheduler to serialize the scheduling data
-    const scheduler = this.spacedRepetition.getScheduler(
-      existingCard.scheduling.algorithmType,
+        // Use the scheduler to serialize the scheduling data
+        const scheduler = this.spacedRepetition.getScheduler(
+          existingCard.scheduling.algorithmType,
+        );
+        const serializedScheduling = scheduler.serializeSchedulingData(
+          existingCard.scheduling,
+        );
+
+        const dbData: JsonObject = {
+          userId: existingCard.userId,
+          tags: [...updatedTags],
+          data: this.convertToJsonObject(updatedData),
+          scheduling: serializedScheduling,
+          createdAt: existingCard.createdAt.toISOString(),
+          updatedAt: now.toISOString(),
+        };
+
+        const documentPath: DocumentPath = [this.COLLECTION_NAME, id];
+        const result = await this.db.writeDocument(documentPath, dbData);
+
+        return pipe(
+          result,
+          andThen(() => {
+            const updatedCard: Card = {
+              id,
+              userId: existingCard.userId,
+              tags: updatedTags,
+              data: updatedData,
+              scheduling: existingCard.scheduling,
+              createdAt: existingCard.createdAt,
+              updatedAt: now,
+            };
+            return resultSuccess(updatedCard);
+          }),
+        );
+      }),
     );
-    const serializedScheduling = scheduler.serializeSchedulingData(
-      existingCard.scheduling,
-    );
-
-    const dbData: JsonObject = {
-      userId: existingCard.userId,
-      tags: [...updatedTags],
-      data: this.convertToJsonObject(updatedData),
-      scheduling: serializedScheduling,
-      createdAt: existingCard.createdAt.toISOString(),
-      updatedAt: now.toISOString(),
-    };
-
-    const documentPath: DocumentPath = [this.COLLECTION_NAME, id];
-    const result = await this.db.writeDocument(documentPath, dbData);
-
-    result.unwrapOrThrow((error) => {
-      throw new Error(`Failed to update card: ${this.getErrorMessage(error)}`);
-    });
-
-    return {
-      id,
-      userId: existingCard.userId,
-      tags: updatedTags,
-      data: updatedData,
-      scheduling: existingCard.scheduling,
-      createdAt: existingCard.createdAt,
-      updatedAt: now,
-    };
   }
 
-  async delete(id: string): Promise<void> {
-    const documentPath: DocumentPath = [this.COLLECTION_NAME, id];
-    const result = await this.db.deleteDocument(documentPath);
+  async delete(
+    id: string,
+  ): Promise<Result<SuccessVoid, ErrorWithCode<'not-found'> | ErrorUnknown>> {
+    const existingCardResult = await this.findById(id);
 
-    result.unwrapOrThrow((error) => {
-      throw new Error(`Failed to delete card: ${this.getErrorMessage(error)}`);
-    });
+    return await asyncPipe(
+      existingCardResult,
+      andThenAsync(async () => {
+        const documentPath: DocumentPath = [this.COLLECTION_NAME, id];
+        const result = await this.db.deleteDocument(documentPath);
+        return pipe(
+          result,
+          andThen(() => resultSuccessVoid()),
+        );
+      }),
+    );
   }
 
   private deserializeCardData(dbData: CardSerialized, id: string): Card {
