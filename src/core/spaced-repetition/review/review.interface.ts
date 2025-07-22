@@ -1,1 +1,1 @@
-export type ReviewResponse = 'again' | 'hard' | 'good' | 'easy';
+export type ReviewResponse = 'failed' | 'good' | 'easy';
