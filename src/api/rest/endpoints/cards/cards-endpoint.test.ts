@@ -398,17 +398,62 @@ describe('Card endpoints', () => {
       cardId = cardResponse.body.id;
     });
 
-    it('should return not implemented status', async () => {
+    it('should process card review successfully', async () => {
       const response = await request(app)
         .post(`/api/cards/${cardId}/review`)
         .send({
           response: 'good',
-          responseTime: 5.2,
+          reviewedAt: new Date().toISOString(),
         })
-        .expect(501);
+        .expect(200);
 
-      expect(response.body.error.code).toBe('NOT_IMPLEMENTED');
-      expect(response.body.error.message).toContain('not yet implemented');
+      expect(response.body.cardId).toBe(cardId);
+      expect(response.body.reviewResponse).toBe('good');
+      expect(response.body.reviewedAt).toBeDefined();
+      expect(response.body.newScheduling).toBeDefined();
+      expect(response.body.newScheduling.nextReviewDate).toBeDefined();
+      expect(response.body.updatedCard).toBeDefined();
+    });
+
+    it('should require response field', async () => {
+      const response = await request(app)
+        .post(`/api/cards/${cardId}/review`)
+        .send({
+          reviewedAt: new Date().toISOString(),
+        })
+        .expect(400);
+
+      expect(response.body.error.code).toBe('VALIDATION_ERROR');
+      expect(response.body.error.message).toContain(
+        'response field is required',
+      );
+    });
+
+    it('should validate response values', async () => {
+      const response = await request(app)
+        .post(`/api/cards/${cardId}/review`)
+        .send({
+          response: 'invalid',
+          reviewedAt: new Date().toISOString(),
+        })
+        .expect(400);
+
+      expect(response.body.error.code).toBe('VALIDATION_ERROR');
+      expect(response.body.error.message).toContain(
+        'response must be one of: failed, good, easy',
+      );
+    });
+
+    it('should handle non-existent card', async () => {
+      const response = await request(app)
+        .post('/api/cards/non-existent-id/review')
+        .send({
+          response: 'good',
+          reviewedAt: new Date().toISOString(),
+        })
+        .expect(404);
+
+      expect(response.body.error.code).toBe('NOT_FOUND');
     });
   });
 });

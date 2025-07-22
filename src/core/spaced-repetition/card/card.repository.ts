@@ -242,15 +242,18 @@ export class CardRepository implements ICardRepository {
           request.tags !== undefined ? request.tags : existingCard.tags;
         const updatedData =
           request.data !== undefined ? request.data : existingCard.data;
+        const updatedScheduling =
+          request.scheduling !== undefined
+            ? request.scheduling
+            : existingCard.scheduling;
         const now = new Date();
 
         // Use the scheduler to serialize the scheduling data
         const scheduler = this.spacedRepetition.getScheduler(
-          existingCard.scheduling.algorithmType,
+          updatedScheduling.algorithmType,
         );
-        const serializedScheduling = scheduler.serializeSchedulingData(
-          existingCard.scheduling,
-        );
+        const serializedScheduling =
+          scheduler.serializeSchedulingData(updatedScheduling);
 
         const dbData: JsonObject = {
           userId: existingCard.userId,
@@ -272,7 +275,7 @@ export class CardRepository implements ICardRepository {
               userId: existingCard.userId,
               tags: updatedTags,
               data: updatedData,
-              scheduling: existingCard.scheduling,
+              scheduling: updatedScheduling,
               createdAt: existingCard.createdAt,
               updatedAt: now,
             };

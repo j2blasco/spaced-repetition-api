@@ -5,9 +5,13 @@ import {
   UpdateCardRequest,
   DueCardsQuery,
 } from 'src/core/spaced-repetition/card/card.interface';
-import { AlgorithmType } from 'src/providers/spaced-repetition-algorithm/core/spaced-repetition-scheduler.interface';
+import {
+  AlgorithmType,
+  RecallLevel,
+} from 'src/providers/spaced-repetition-algorithm/core/spaced-repetition-scheduler.interface';
 import { DependencyInjector } from 'src/providers/injector/injector';
 import { spacedRepetitionSchedulerInjectionToken } from 'src/providers/spaced-repetition-algorithm/core/space-repetition.injection-token';
+import type { ReviewResponse } from 'src/core/spaced-repetition/review/review.interface';
 
 export const cardsEndpointRoute = '/api/cards';
 
@@ -151,26 +155,102 @@ async function handleGetDueCards(req: Request, res: Response) {
 
 // POST /api/cards/:id/review - Submit card review (updates scheduling)
 async function handleReviewCard(req: Request, res: Response) {
-  // This endpoint would need a review service that handles the spaced repetition logic
-  // For now, return a placeholder response
+  const cardId = req.params.id;
+  const reviewResponse = req.body.response as ReviewResponse;
+  const reviewedAt = req.body.reviewedAt
+    ? new Date(req.body.reviewedAt)
+    : new Date();
 
-  const spacedRepetition = DependencyInjector.inject(
-    spacedRepetitionSchedulerInjectionToken,
-  );
+  // Validate required fields
+  if (!reviewResponse) {
+    res.status(400).json({
+      error: {
+        code: 'VALIDATION_ERROR',
+        message: 'response field is required',
+      },
+    });
+    return;
+  }
 
-  // Get card
+  if (!['failed', 'good', 'easy'].includes(reviewResponse)) {
+    res.status(400).json({
+      error: {
+        code: 'VALIDATION_ERROR',
+        message: 'response must be one of: failed, good, easy',
+      },
+    });
+    return;
+  }
 
-  // Get scheduler depending on the card algorithm
-  const scheduler = spacedRepetition.getScheduler;
+  try {
+    // Get the card
+    const cardResult = await cardService.findCardById(cardId);
+    if (!cardResult.success) {
+      const statusCode = cardResult.error?.code === 'NOT_FOUND' ? 404 : 500;
+      res.status(statusCode).json({
+        error: cardResult.error,
+      });
+      return;
+    }
 
-  // Review card using the
+    const card = cardResult.data!;
 
-  res.status(501).json({
-    error: {
-      code: 'NOT_IMPLEMENTED',
-      message: 'Review endpoint not yet implemented',
-    },
-  });
+    // Get the spaced repetition scheduler
+    const spacedRepetition = DependencyInjector.inject(
+      spacedRepetitionSchedulerInjectionToken,
+    );
+
+    // Get scheduler for the card's algorithm
+    const scheduler = spacedRepetition.getScheduler(
+      card.scheduling.algorithmType,
+    );
+
+    // Map ReviewResponse to RecallLevel
+    const recallLevel: RecallLevel =
+      reviewResponse === 'failed'
+        ? RecallLevel.HARD
+        : reviewResponse === 'good'
+          ? RecallLevel.MEDIUM
+          : RecallLevel.EASY;
+
+    // Perform the review and get new scheduling
+    const reviewResult = scheduler.reschedule({
+      currentScheduling: card.scheduling,
+      reviewResult: {
+        recallLevel,
+        reviewedAt,
+      },
+    });
+
+    // Update the card with new scheduling data
+    const updateResult = await cardService.updateCard(cardId, {
+      scheduling: reviewResult.newScheduling,
+    });
+
+    if (!updateResult.success) {
+      res.status(500).json({
+        error: updateResult.error,
+      });
+      return;
+    }
+
+    // Return the updated card with new scheduling
+    res.json({
+      cardId,
+      reviewResponse,
+      reviewedAt: reviewedAt.toISOString(),
+      newScheduling: reviewResult.newScheduling,
+      updatedCard: updateResult.data,
+    });
+  } catch (error) {
+    console.error('Error in handleReviewCard:', error);
+    res.status(500).json({
+      error: {
+        code: 'INTERNAL_ERROR',
+        message: 'An unexpected error occurred while processing the review',
+      },
+    });
+  }
 }
 
 export function setupCardsEndpoints(app: Express) {

@@ -30,6 +30,7 @@ export interface CreateCardRequest {
 export interface UpdateCardRequest {
   readonly tags?: readonly string[];
   readonly data?: Record<string, unknown>;
+  readonly scheduling?: CardSchedulingData;
 }
 
 export interface DueCardsQuery {
