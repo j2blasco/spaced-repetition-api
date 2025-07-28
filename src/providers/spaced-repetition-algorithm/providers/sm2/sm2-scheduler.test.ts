@@ -1,6 +1,7 @@
 import { AlgorithmType } from '../../core/spaced-repetition-scheduler.interface';
 import { testSpacedRepetitionScheduler } from '../../core/spaced-repetition-scheduler.generic.test';
 import { SM2Scheduler } from './sm2-scheduler';
+import { describe, beforeEach, it, expect } from 'vitest';
 
 describe('SM2Scheduler', () => {
   // Use the generic test suite

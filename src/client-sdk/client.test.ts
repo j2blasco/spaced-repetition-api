@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeAll } from '@jest/globals';
+import { describe, beforeAll, it, expect } from 'vitest';
 import SpacedRepetitionClient from './index';
 
 describe('SpacedRepetitionClient', () => {

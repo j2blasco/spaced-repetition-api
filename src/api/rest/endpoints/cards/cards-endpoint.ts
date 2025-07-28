@@ -1,5 +1,4 @@
 import { Express, Request, Response } from 'express';
-import { CardService } from 'src/core/spaced-repetition/card/card.service';
 import {
   CreateCardRequest,
   UpdateCardRequest,
@@ -12,12 +11,17 @@ import {
 import { DependencyInjector } from 'src/providers/injector/injector';
 import { spacedRepetitionSchedulerInjectionToken } from 'src/providers/spaced-repetition-algorithm/core/space-repetition.injection-token';
 import type { ReviewResponse } from 'src/core/spaced-repetition/review/review.interface';
+import { restApiBaseRoute } from '../endpoints-route';
+import { getCardRepository } from 'src/core/spaced-repetition/card/get-card-repository';
+import { pipe } from '@j2blasco/ts-pipe';
+import {
+  andThen,
+  catchError,
+  resultSuccessVoid,
+} from '@j2blasco/ts-result';
 
-export const cardsEndpointRoute = '/api/cards';
+export const cardsEndpointRoute = `${restApiBaseRoute}/cards`;
 
-const cardService = new CardService();
-
-// GET /api/cards - List user's cards (with filtering by tags, due status)
 async function handleListCards(req: Request, res: Response) {
   const userId = req.query.userId as string;
 
@@ -31,19 +35,33 @@ async function handleListCards(req: Request, res: Response) {
     return;
   }
 
-  const result = await cardService.findCardsByUserId(userId);
+  const cardRepo = getCardRepository();
+  const result = await cardRepo.findByUserId(userId);
 
-  if (result.success) {
-    res.json(result.data);
-  } else {
-    const statusCode = result.error?.code === 'NOT_FOUND' ? 404 : 500;
-    res.status(statusCode).json({
-      error: result.error,
-    });
-  }
+  pipe(
+    result,
+    andThen((cards) => {
+      res.json(cards);
+      return resultSuccessVoid();
+    }),
+    catchError((error) => {
+      switch (error.code) {
+        case 'unknown':
+          res.status(500).json({
+            error: error.data.message,
+          });
+          break;
+        default:
+          // Handle any other error types
+          res.status(500).json({
+            error: 'An unexpected error occurred',
+          });
+      }
+      return resultSuccessVoid();
+    }),
+  );
 }
 
-// POST /api/cards - Create new card
 async function handleCreateCard(req: Request, res: Response) {
   const createRequest: CreateCardRequest = {
     userId: req.body.userId,
@@ -52,35 +70,48 @@ async function handleCreateCard(req: Request, res: Response) {
     algorithmType: req.body.algorithmType || AlgorithmType.SM2,
   };
 
-  const result = await cardService.createCard(createRequest);
+  const cardRepo = getCardRepository();
+  const result = await cardRepo.create(createRequest);
+  const card = result.unwrapOrThrow();
 
-  if (result.success) {
-    res.status(201).json(result.data);
-  } else {
-    const statusCode = result.error?.code === 'NOT_FOUND' ? 404 : 500;
-    res.status(statusCode).json({
-      error: result.error,
-    });
-  }
+  res.status(201).json(card);
 }
 
-// GET /api/cards/:id - Get card details
 async function handleGetCard(req: Request, res: Response) {
   const cardId = req.params.id;
 
-  const result = await cardService.findCardById(cardId);
+  const cardRepo = getCardRepository();
+  const result = await cardRepo.findById(cardId);
 
-  if (result.success) {
-    res.json(result.data);
-  } else {
-    const statusCode = result.error?.code === 'NOT_FOUND' ? 404 : 500;
-    res.status(statusCode).json({
-      error: result.error,
-    });
-  }
+  pipe(
+    result,
+    andThen((card) => {
+      res.json(card);
+      return resultSuccessVoid();
+    }),
+    catchError((error) => {
+      switch (error.code) {
+        case 'not-found':
+          res.status(404).json({
+            error: 'Card not found',
+          });
+          break;
+        case 'unknown':
+          res.status(500).json({
+            error: error.data.message,
+          });
+          break;
+        default:
+          // Handle any other error types
+          res.status(500).json({
+            error: 'An unexpected error occurred',
+          });
+      }
+      return resultSuccessVoid();
+    }),
+  );
 }
 
-// PUT /api/cards/:id - Update card content
 async function handleUpdateCard(req: Request, res: Response) {
   const cardId = req.params.id;
   const updateRequest: UpdateCardRequest = {
@@ -88,35 +119,73 @@ async function handleUpdateCard(req: Request, res: Response) {
     data: req.body.data,
   };
 
-  const result = await cardService.updateCard(cardId, updateRequest);
+  const cardRepo = getCardRepository();
+  const result = await cardRepo.update(cardId, updateRequest);
 
-  if (result.success) {
-    res.json(result.data);
-  } else {
-    const statusCode = result.error?.code === 'NOT_FOUND' ? 404 : 500;
-    res.status(statusCode).json({
-      error: result.error,
-    });
-  }
+  pipe(
+    result,
+    andThen((card) => {
+      res.json(card);
+      return resultSuccessVoid();
+    }),
+    catchError((error) => {
+      switch (error.code) {
+        case 'not-found':
+          res.status(404).json({
+            error: 'Card not found',
+          });
+          break;
+        case 'unknown':
+          res.status(500).json({
+            error: error.data.message,
+          });
+          break;
+        default:
+          // Handle any other error types
+          res.status(500).json({
+            error: 'An unexpected error occurred',
+          });
+      }
+      return resultSuccessVoid();
+    }),
+  );
 }
 
-// DELETE /api/cards/:id - Delete card
 async function handleDeleteCard(req: Request, res: Response) {
   const cardId = req.params.id;
 
-  const result = await cardService.deleteCard(cardId);
+  const cardRepo = getCardRepository();
+  const result = await cardRepo.delete(cardId);
 
-  if (result.success) {
-    res.status(204).send();
-  } else {
-    const statusCode = result.error?.code === 'NOT_FOUND' ? 404 : 500;
-    res.status(statusCode).json({
-      error: result.error,
-    });
-  }
+  pipe(
+    result,
+    andThen(() => {
+      res.status(204).send();
+      return resultSuccessVoid();
+    }),
+    catchError((error) => {
+      switch (error.code) {
+        case 'not-found':
+          res.status(404).json({
+            error: 'Card not found',
+          });
+          break;
+        case 'unknown':
+          res.status(500).json({
+            error: error.data.message,
+          });
+          break;
+        default:
+          // Handle any other error types
+          res.status(500).json({
+            error: 'An unexpected error occurred',
+          });
+      }
+      return resultSuccessVoid();
+    }),
+  );
 }
 
-// GET /api/cards/due - Get cards due for review
 async function handleGetDueCards(req: Request, res: Response) {
   const userId = req.query.userId as string;
 
@@ -141,19 +210,33 @@ async function handleGetDueCards(req: Request, res: Response) {
       : undefined,
   };
 
-  const result = await cardService.findDueCards(dueCardsQuery);
+  const cardRepo = getCardRepository();
+  const result = await cardRepo.findDueCards(dueCardsQuery);
 
-  if (result.success) {
-    res.json(result.data);
-  } else {
-    const statusCode = result.error?.code === 'NOT_FOUND' ? 404 : 500;
-    res.status(statusCode).json({
-      error: result.error,
-    });
-  }
+  pipe(
+    result,
+    andThen((cards) => {
+      res.json(cards);
+      return resultSuccessVoid();
+    }),
+    catchError((error) => {
+      switch (error.code) {
+        case 'unknown':
+          res.status(500).json({
+            error: error.data.message,
+          });
+          break;
+        default:
+          // Handle any other error types
+          res.status(500).json({
+            error: 'An unexpected error occurred',
+          });
+      }
+      return resultSuccessVoid();
+    }),
+  );
 }
 
-// POST /api/cards/:id/review - Submit card review (updates scheduling)
 async function handleReviewCard(req: Request, res: Response) {
   const cardId = req.params.id;
   const reviewResponse = req.body.response as ReviewResponse;
@@ -161,7 +244,6 @@ async function handleReviewCard(req: Request, res: Response) {
     ? new Date(req.body.reviewedAt)
     : new Date();
 
-  // Validate required fields
   if (!reviewResponse) {
     res.status(400).json({
       error: {
@@ -183,29 +265,44 @@ async function handleReviewCard(req: Request, res: Response) {
   }
 
   try {
-    // Get the card
-    const cardResult = await cardService.findCardById(cardId);
-    if (!cardResult.success) {
-      const statusCode = cardResult.error?.code === 'NOT_FOUND' ? 404 : 500;
+    const cardRepo = getCardRepository();
+    const cardResult = await cardRepo.findById(cardId);
+
+    const cardOrError = await new Promise<{ success: true; card: any } | { success: false; error: any }>((resolve) => {
+      pipe(
+        cardResult,
+        andThen((card) => {
+          resolve({ success: true, card });
+          return resultSuccessVoid();
+        }),
+        catchError((error) => {
+          resolve({ success: false, error });
+          return resultSuccessVoid();
+        }),
+      );
+    });
+
+    if (!cardOrError.success) {
+      const statusCode = cardOrError.error?.code === 'not-found' ? 404 : 500;
       res.status(statusCode).json({
-        error: cardResult.error,
+        error:
+          cardOrError.error?.code === 'not-found'
+            ? 'Card not found'
+            : cardOrError.error?.data?.message || 'An unexpected error occurred',
       });
       return;
     }
 
-    const card = cardResult.data!;
+    const card = cardOrError.card;
 
-    // Get the spaced repetition scheduler
     const spacedRepetition = DependencyInjector.inject(
       spacedRepetitionSchedulerInjectionToken,
     );
 
-    // Get scheduler for the card's algorithm
     const scheduler = spacedRepetition.getScheduler(
       card.scheduling.algorithmType,
     );
 
-    // Map ReviewResponse to RecallLevel
     const recallLevel: RecallLevel =
       reviewResponse === 'failed'
         ? RecallLevel.HARD
@@ -213,7 +310,6 @@ async function handleReviewCard(req: Request, res: Response) {
           ? RecallLevel.MEDIUM
           : RecallLevel.EASY;
 
-    // Perform the review and get new scheduling
     const reviewResult = scheduler.reschedule({
       currentScheduling: card.scheduling,
       reviewResult: {
@@ -222,25 +318,37 @@ async function handleReviewCard(req: Request, res: Response) {
       },
     });
 
-    // Update the card with new scheduling data
-    const updateResult = await cardService.updateCard(cardId, {
+    const updateResult = await cardRepo.update(cardId, {
       scheduling: reviewResult.newScheduling,
     });
 
-    if (!updateResult.success) {
+    const updateOrError = await new Promise<{ success: true; updatedCard: any } | { success: false; error: any }>((resolve) => {
+      pipe(
+        updateResult,
+        andThen((updatedCard) => {
+          resolve({ success: true, updatedCard });
+          return resultSuccessVoid();
+        }),
+        catchError((error) => {
+          resolve({ success: false, error });
+          return resultSuccessVoid();
+        }),
+      );
+    });
+
+    if (!updateOrError.success) {
       res.status(500).json({
-        error: updateResult.error,
+        error: updateOrError.error?.data?.message || 'Failed to update card',
       });
       return;
     }
 
-    // Return the updated card with new scheduling
     res.json({
       cardId,
       reviewResponse,
       reviewedAt: reviewedAt.toISOString(),
       newScheduling: reviewResult.newScheduling,
-      updatedCard: updateResult.data,
+      updatedCard: updateOrError.updatedCard,
     });
   } catch (error) {
     console.error('Error in handleReviewCard:', error);
@@ -254,7 +362,6 @@ async function handleReviewCard(req: Request, res: Response) {
 }
 
 export function setupCardsEndpoints(app: Express) {
-  // GET /api/cards/due (must be before /:id route)
   app.get(`${cardsEndpointRoute}/due`, (req: Request, res: Response) => {
     try {
       handleGetDueCards(req, res);
@@ -263,7 +370,6 @@ export function setupCardsEndpoints(app: Express) {
     }
   });
 
-  // GET /api/cards
   app.get(cardsEndpointRoute, (req: Request, res: Response) => {
     try {
       handleListCards(req, res);
@@ -272,7 +378,6 @@ export function setupCardsEndpoints(app: Express) {
     }
   });
 
-  // POST /api/cards
   app.post(cardsEndpointRoute, (req: Request, res: Response) => {
     try {
       handleCreateCard(req, res);
@@ -281,7 +386,6 @@ export function setupCardsEndpoints(app: Express) {
     }
   });
 
-  // GET /api/cards/:id
   app.get(`${cardsEndpointRoute}/:id`, (req: Request, res: Response) => {
     try {
       handleGetCard(req, res);
@@ -290,7 +394,6 @@ export function setupCardsEndpoints(app: Express) {
     }
   });
 
-  // PUT /api/cards/:id
   app.put(`${cardsEndpointRoute}/:id`, (req: Request, res: Response) => {
     try {
       handleUpdateCard(req, res);
@@ -299,7 +402,6 @@ export function setupCardsEndpoints(app: Express) {
     }
   });
 
-  // DELETE /api/cards/:id
   app.delete(`${cardsEndpointRoute}/:id`, (req: Request, res: Response) => {
     try {
       handleDeleteCard(req, res);
@@ -308,7 +410,6 @@ export function setupCardsEndpoints(app: Express) {
     }
   });
 
-  // POST /api/cards/:id/review
   app.post(
     `${cardsEndpointRoute}/:id/review`,
     (req: Request, res: Response) => {

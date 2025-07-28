@@ -1,6 +1,7 @@
 import { Express, Request, Response } from 'express';
+import { restApiBaseRoute } from '../endpoints-route';
 
-export const healthEndpointRoute = '/api/health';
+export const healthEndpointRoute = `${restApiBaseRoute}/health`;
 
 function handleHealthEndpoint(_req: Request, res: Response) {
   res.json({

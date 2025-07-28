@@ -1,11 +1,3 @@
-import {
-  describe,
-  it,
-  expect,
-  beforeAll,
-  afterAll,
-  beforeEach,
-} from '@jest/globals';
 import { DependencyInjector } from 'src/providers/injector/injector';
 import { spacedRepetitionSchedulerInjectionToken } from 'src/providers/spaced-repetition-algorithm/core/space-repetition.injection-token';
 import { getCardRepository } from './card/get-card-repository';
@@ -15,14 +7,23 @@ import {
   AlgorithmType,
   RecallLevel,
 } from 'src/providers/spaced-repetition-algorithm/core/spaced-repetition-scheduler.interface';
+import {
+  describe,
+  beforeAll,
+  afterAll,
+  beforeEach,
+  it,
+  expect,
+  vi,
+} from 'vitest';
 
 describe('Spaced Repetition System - Full User Story', () => {
   beforeAll(() => {
-    jest.useFakeTimers(); // enable fake timers
+    vi.useFakeTimers(); // enable fake timers
   });
 
   afterAll(() => {
-    jest.useRealTimers(); // restore real timers after tests
+    vi.useRealTimers(); // restore real timers after tests
   });
 
   beforeEach(() => {
@@ -33,7 +34,7 @@ describe('Spaced Repetition System - Full User Story', () => {
   it('should demonstrate complete spaced repetition workflow with time progression', async () => {
     // Set initial fixed date
     const startDate = new Date('2024-01-01T09:00:00Z');
-    jest.setSystemTime(startDate);
+    vi.setSystemTime(startDate);
 
     // Get dependencies
     const cardRepo = getCardRepository();
@@ -84,7 +85,7 @@ describe('Spaced Repetition System - Full User Story', () => {
 
     // 4. Advance time to when cards become due (typically next day)
     const nextDay = new Date('2024-01-02T09:00:00Z');
-    jest.setSystemTime(nextDay);
+    vi.setSystemTime(nextDay);
 
     const dueCardsResult = await cardRepo.findDueCards({
       userId: user.id,
@@ -144,7 +145,7 @@ describe('Spaced Repetition System - Full User Story', () => {
 
     // 8. Advance time to test long-term scheduling
     const oneWeekLater = new Date('2024-01-08T09:00:00Z');
-    jest.setSystemTime(oneWeekLater);
+    vi.setSystemTime(oneWeekLater);
 
     // After reviewing cards and time progression, some cards should be due again
     const laterDueCardsResult = await cardRepo.findDueCards({
@@ -173,7 +174,7 @@ describe('Spaced Repetition System - Full User Story', () => {
   it('should handle time progression and due date calculations correctly', async () => {
     // Set a specific starting time
     const fixedDate = new Date('2024-06-15T10:00:00Z');
-    jest.setSystemTime(fixedDate);
+    vi.setSystemTime(fixedDate);
 
     expect(new Date().toISOString()).toBe('2024-06-15T10:00:00.000Z');
 
@@ -212,7 +213,7 @@ describe('Spaced Repetition System - Full User Story', () => {
     const nextReviewTime = new Date(
       firstReview.newScheduling.nextReviewDate.getTime() + 1000,
     ); // 1 second after due
-    jest.setSystemTime(nextReviewTime);
+    vi.setSystemTime(nextReviewTime);
 
     const dueCardsResult = await cardRepo.findDueCards({
       userId: user.id,
@@ -243,7 +244,7 @@ describe('Spaced Repetition System - Full User Story', () => {
 
   it('should demonstrate complete workflow with difficult vs easy cards', async () => {
     const startTime = new Date('2024-03-01T08:00:00Z');
-    jest.setSystemTime(startTime);
+    vi.setSystemTime(startTime);
 
     const cardRepo = getCardRepository();
     const userRepo = getUserRepository();
@@ -282,7 +283,7 @@ describe('Spaced Repetition System - Full User Story', () => {
 
     // Review cycle 1: Easy card gets 'easy', hard card gets 'again'
     const nextDay = new Date(currentTime.getTime() + 24 * 60 * 60 * 1000);
-    jest.setSystemTime(nextDay);
+    vi.setSystemTime(nextDay);
     currentTime = nextDay;
 
     const easyReviewResult = scheduler.reschedule({
@@ -317,7 +318,7 @@ describe('Spaced Repetition System - Full User Story', () => {
     );
 
     // Test easy card when it's due
-    jest.setSystemTime(easyNextReview);
+    vi.setSystemTime(easyNextReview);
     const easySecondResult = scheduler.reschedule({
       currentScheduling: easyScheduling,
       reviewResult: {
@@ -328,7 +329,7 @@ describe('Spaced Repetition System - Full User Story', () => {
     easyScheduling = easySecondResult.newScheduling;
 
     // Test hard card when it's due
-    jest.setSystemTime(hardNextReview);
+    vi.setSystemTime(hardNextReview);
     const hardSecondResult = scheduler.reschedule({
       currentScheduling: hardScheduling,
       reviewResult: {
@@ -350,7 +351,7 @@ describe('Spaced Repetition System - Full User Story', () => {
         hardScheduling.nextReviewDate.getTime(),
       ) + 1000,
     );
-    jest.setSystemTime(futureTime);
+    vi.setSystemTime(futureTime);
 
     const allDueResult = await cardRepo.findDueCards({
       userId: user.id,

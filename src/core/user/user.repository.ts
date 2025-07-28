@@ -10,6 +10,8 @@ import {
   IUserRepository,
   UserId,
   UserPreferences,
+  SpacedRepetitionAlgorithmType,
+  UserSerialized,
 } from './user.interface';
 import {
   Result,
@@ -25,16 +27,46 @@ import {
 } from '@j2blasco/ts-result';
 import { asyncPipe, pipe } from '@j2blasco/ts-pipe';
 
-type UserSerialized = {
-  preferences: {
-    maxNewCardsPerDay: number;
-    maxReviewsPerDay: number;
-    timezone: string;
-    defaultAlgorithm: string;
-  };
-  createdAt: string;
-  updatedAt: string;
+const defaultPreferences: UserPreferences = {
+  maxNewCardsPerDay: 20,
+  maxReviewsPerDay: 100,
+  defaultAlgorithm: 'sm2',
+  timezone: 'UTC',
 };
+
+export function serializeUser(user: User): UserSerialized {
+  return {
+    id: user.id,
+    preferences: {
+      maxNewCardsPerDay: user.preferences.maxNewCardsPerDay,
+      maxReviewsPerDay: user.preferences.maxReviewsPerDay,
+      defaultAlgorithm: user.preferences.defaultAlgorithm,
+      timezone: user.preferences.timezone,
+    },
+    createdAt: user.createdAt.toISOString(),
+    updatedAt: user.updatedAt.toISOString(),
+  };
+}
+
+export function deserializeUser(
+  serializedUser: UserSerialized,
+  id: UserId,
+): User {
+  const preferences: UserPreferences = {
+    maxNewCardsPerDay: serializedUser.preferences.maxNewCardsPerDay,
+    maxReviewsPerDay: serializedUser.preferences.maxReviewsPerDay,
+    defaultAlgorithm: serializedUser.preferences
+      .defaultAlgorithm as SpacedRepetitionAlgorithmType,
+    timezone: serializedUser.preferences.timezone,
+  };
+
+  return {
+    id,
+    preferences,
+    createdAt: new Date(serializedUser.createdAt),
+    updatedAt: new Date(serializedUser.updatedAt),
+  };
+}
 
 export class UserRepository implements IUserRepository {
   private readonly COLLECTION_NAME = 'users';
@@ -46,28 +78,20 @@ export class UserRepository implements IUserRepository {
   ): Promise<Result<User, ErrorUnknown>> {
     const now = new Date();
 
-    const defaultPreferences: UserPreferences = {
-      maxNewCardsPerDay: 20,
-      maxReviewsPerDay: 100,
-      timezone: 'UTC',
-      defaultAlgorithm: 'sm2',
-    };
-
     const finalPreferences: UserPreferences = {
       ...defaultPreferences,
       ...(request.preferences || {}),
     };
 
-    const userData: UserSerialized = {
-      preferences: {
-        maxNewCardsPerDay: finalPreferences.maxNewCardsPerDay,
-        maxReviewsPerDay: finalPreferences.maxReviewsPerDay,
-        timezone: finalPreferences.timezone,
-        defaultAlgorithm: finalPreferences.defaultAlgorithm,
-      },
-      createdAt: now.toISOString(),
-      updatedAt: now.toISOString(),
+    // Create a temporary User object to serialize
+    const tempUser: User = {
+      id: '' as UserId, // Will be replaced with actual ID after creation
+      preferences: finalPreferences,
+      createdAt: now,
+      updatedAt: now,
     };
+
+    const userData = serializeUser(tempUser);
 
     const collectionPath: CollectionPath = [this.COLLECTION_NAME];
 
@@ -101,7 +125,7 @@ export class UserRepository implements IUserRepository {
         if (data === null) {
           return resultSuccess(null);
         }
-        const user = this.deserializeUserData(data as UserSerialized, id);
+        const user = deserializeUser(data as UserSerialized, id);
         return resultSuccess(user);
       }),
     );
@@ -124,16 +148,17 @@ export class UserRepository implements IUserRepository {
           ...(request.preferences || {}),
         };
         const now = new Date();
-        const userData: UserSerialized = {
-          preferences: {
-            maxNewCardsPerDay: updatedPreferences.maxNewCardsPerDay,
-            maxReviewsPerDay: updatedPreferences.maxReviewsPerDay,
-            timezone: updatedPreferences.timezone,
-            defaultAlgorithm: updatedPreferences.defaultAlgorithm,
-          },
-          createdAt: existingUser.createdAt.toISOString(),
-          updatedAt: now.toISOString(),
+
+        // Create updated user object to serialize
+        const updatedUser: User = {
+          id,
+          preferences: updatedPreferences,
+          createdAt: existingUser.createdAt,
+          updatedAt: now,
         };
+
+        const userData = serializeUser(updatedUser);
+
         return resultSuccess({
           userData,
           existingUser,
@@ -182,22 +207,5 @@ export class UserRepository implements IUserRepository {
         );
       }),
     );
-  }
-
-  private deserializeUserData(dbData: UserSerialized, id: UserId): User {
-    const preferences: UserPreferences = {
-      maxNewCardsPerDay: dbData.preferences?.maxNewCardsPerDay || 20,
-      maxReviewsPerDay: dbData.preferences?.maxReviewsPerDay || 100,
-      timezone: dbData.preferences?.timezone || 'UTC',
-      defaultAlgorithm:
-        (dbData.preferences?.defaultAlgorithm as 'sm2' | 'fsrs') || 'sm2',
-    };
-
-    return {
-      id,
-      preferences,
-      createdAt: new Date(dbData.createdAt || new Date()),
-      updatedAt: new Date(dbData.updatedAt || new Date()),
-    };
   }
 }

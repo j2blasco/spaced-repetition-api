@@ -7,27 +7,43 @@ import {
 
 export type UserId = string;
 
-export interface UserPreferences {
+export type SpacedRepetitionAlgorithmType = 'sm2' | 'fsrs';
+
+export type UserPreferencesSerialized = {
   readonly maxNewCardsPerDay: number;
   readonly maxReviewsPerDay: number;
-  readonly timezone: string;
-  readonly defaultAlgorithm: 'sm2' | 'fsrs';
-}
+  readonly defaultAlgorithm: string;
+  readonly timezone?: string;
+};
 
-export interface User {
+export type UserPreferences = {
+  readonly maxNewCardsPerDay: number;
+  readonly maxReviewsPerDay: number;
+  readonly defaultAlgorithm: SpacedRepetitionAlgorithmType;
+  readonly timezone?: string;
+};
+
+export type User = {
   readonly id: UserId;
   readonly createdAt: Date;
   readonly updatedAt: Date;
   readonly preferences: UserPreferences;
-}
+};
 
-export interface CreateUserRequest {
-  readonly preferences?: Partial<UserPreferences>;
-}
+export type UserSerialized = {
+  readonly id: UserId;
+  readonly preferences: UserPreferencesSerialized;
+  readonly createdAt: string;
+  readonly updatedAt: string;
+};
 
-export interface UpdateUserRequest {
+export type CreateUserRequest = {
   readonly preferences?: Partial<UserPreferences>;
-}
+};
+
+export type UpdateUserRequest = {
+  readonly preferences?: Partial<UserPreferences>;
+};
 
 export interface IUserRepository {
   /**
@@ -38,7 +54,12 @@ export interface IUserRepository {
   /**
    * Find a user by ID
    */
-  findById(id: UserId): Promise<Result<User | null, ErrorUnknown>>;
+
+  // TODO:
+  // ): Promise<Result<User, ErrorWithCode<'not-found'> | ErrorUnknown>>;
+  findById(
+    id: UserId,
+  ): Promise<Result<User | null, ErrorWithCode<'not-found'> | ErrorUnknown>>;
 
   /**
    * Update an existing user

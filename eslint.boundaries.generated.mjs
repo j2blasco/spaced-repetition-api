@@ -22,7 +22,7 @@ export default [
         {
           default: 'disallow',
           rules: [
-            { from: 'rest', allow: ['express', 'cors', 'supertest'] }
+            { from: 'rest', allow: ['express', 'cors', 'supertest', 'http', 'rxjs', 'vitest', '@j2blasco/*'] }
           ]
         }
       ],

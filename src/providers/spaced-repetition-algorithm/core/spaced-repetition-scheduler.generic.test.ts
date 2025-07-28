@@ -9,6 +9,7 @@ import {
   calculateInterval,
   calculateIntervalChange,
 } from '../providers/scheduling-utils';
+import { describe, beforeEach, it, expect } from 'vitest';
 
 /**
  * Generic test suite for SpacedRepetitionScheduler implementations

@@ -1,94 +1,134 @@
 import { Express, Request, Response } from 'express';
-import { UserService } from 'src/core/user/user.service';
 import {
   CreateUserRequest,
   UpdateUserRequest,
 } from 'src/core/user/user.interface';
+import { restApiBaseRoute } from '../endpoints-route';
+import { serializeUser } from 'src/core/user/user.repository';
+import { getUserRepository } from 'src/core/user/get-user-repository';
+import { pipe } from '@j2blasco/ts-pipe';
+import {
+  andThen,
+  catchError,
+  resultError,
+  resultSuccessVoid,
+} from '@j2blasco/ts-result';
 
-export const usersEndpointRoute = '/api/users';
+export const usersEndpointRoute = `${restApiBaseRoute}/users`;
 
-const userService = new UserService();
-
-// POST /api/users - Create new user
 async function handleCreateUser(req: Request, res: Response) {
   const createRequest: CreateUserRequest = {
-    preferences: req.body.preferences,
+    preferences: req.body?.preferences,
   };
 
-  const result = await userService.createUser(createRequest);
+  const userRepo = getUserRepository();
+  const result = await userRepo.create(createRequest);
+  const user = result.unwrapOrThrow();
 
-  if (result.success) {
-    res.status(201).json(result.data);
-  } else {
-    const statusCode = result.error?.code === 'NOT_FOUND' ? 404 : 500;
-    res.status(statusCode).json({
-      error: result.error,
-    });
-  }
+  res.status(201).json(serializeUser(user));
 }
 
-// GET /api/users/:id - Get user details
 async function handleGetUser(req: Request, res: Response) {
   const userId = req.params.id;
 
-  const result = await userService.findUserById(userId);
+  const userRepo = getUserRepository();
+  const result = await userRepo.findById(userId);
 
-  if (result.success) {
-    if (result.data === null) {
-      res.status(404).json({
-        error: {
-          code: 'NOT_FOUND',
-          message: 'User not found',
-        },
-      });
-    } else {
-      res.json(result.data);
-    }
-  } else {
-    const statusCode = result.error?.code === 'NOT_FOUND' ? 404 : 500;
-    res.status(statusCode).json({
-      error: result.error,
-    });
-  }
+  pipe(
+    result,
+    andThen((user) => {
+      // TODO: findById should not return null
+      if (user == null) {
+        return resultError.withCode('not-found' as const);
+      }
+      if (user) {
+        res.json(serializeUser(user));
+      }
+      return resultSuccessVoid();
+    }),
+    catchError((error) => {
+      switch (error.code) {
+        case 'not-found':
+          res.status(404).json({
+            error: 'User not found',
+          });
+          break;
+        case 'unknown':
+          res.status(500).json({
+            error: error.data.message,
+          });
+          break;
+        default:
+          const _exhaustiveCheck: never = error;
+      }
+      return resultSuccessVoid();
+    }),
+  );
 }
 
-// PUT /api/users/:id - Update user preferences
 async function handleUpdateUser(req: Request, res: Response) {
   const userId = req.params.id;
   const updateRequest: UpdateUserRequest = {
     preferences: req.body.preferences,
   };
 
-  const result = await userService.updateUser(userId, updateRequest);
+  const userRepo = getUserRepository();
+  const result = await userRepo.update(userId, updateRequest);
 
-  if (result.success) {
-    res.json(result.data);
-  } else {
-    const statusCode = result.error?.code === 'NOT_FOUND' ? 404 : 500;
-    res.status(statusCode).json({
-      error: result.error,
-    });
-  }
+  pipe(
+    result,
+    andThen((user) => {
+      res.json(serializeUser(user));
+      return resultSuccessVoid();
+    }),
+    catchError((error) => {
+      switch (error.code) {
+        case 'not-found':
+          res.status(404).json({
+            error: 'User not found',
+          });
+          break;
+        case 'unknown':
+          res.status(500).json({
+            error: error.data.message,
+          });
+          break;
+        default:
+          const _exhaustiveCheck: never = error;
+      }
+      return resultSuccessVoid();
+    }),
+  );
 }
 
-// DELETE /api/users/:id - Delete user
 async function handleDeleteUser(req: Request, res: Response) {
   const userId = req.params.id;
 
-  const result = await userService.deleteUser(userId);
+  const userRepo = getUserRepository();
+  const result = await userRepo.delete(userId);
 
-  if (result.success) {
-    res.status(204).send();
-  } else {
-    const statusCode = result.error?.code === 'NOT_FOUND' ? 404 : 500;
-    res.status(statusCode).json({
-      error: result.error,
-    });
-  }
+  pipe(
+    result,
+    andThen(() => {
+      res.status(204).send();
+      return resultSuccessVoid();
+    }),
+    catchError((error) => {
+      switch (error.code) {
+        case 'unknown':
+          res.status(500).json({
+            error: error.data.message,
+          });
+          break;
+        default:
+          const _exhaustiveCheck: never = error.code;
+      }
+      return resultSuccessVoid();
+    }),
+  );
 }
 
 export function setupUsersEndpoints(app: Express) {
-  // POST /api/users
   app.post(usersEndpointRoute, (req: Request, res: Response) => {
     try {
       handleCreateUser(req, res);
@@ -97,7 +137,6 @@ export function setupUsersEndpoints(app: Express) {
     }
   });
 
-  // GET /api/users/:id
   app.get(`${usersEndpointRoute}/:id`, (req: Request, res: Response) => {
     try {
       handleGetUser(req, res);
@@ -106,7 +145,6 @@ export function setupUsersEndpoints(app: Express) {
     }
   });
 
-  // PUT /api/users/:id
   app.put(`${usersEndpointRoute}/:id`, (req: Request, res: Response) => {
     try {
       handleUpdateUser(req, res);
@@ -115,7 +153,6 @@ export function setupUsersEndpoints(app: Express) {
     }
   });
 
-  // DELETE /api/users/:id
   app.delete(`${usersEndpointRoute}/:id`, (req: Request, res: Response) => {
     try {
       handleDeleteUser(req, res);

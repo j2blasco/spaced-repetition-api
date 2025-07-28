@@ -1,8 +1,8 @@
-import { describe, it, expect } from '@jest/globals';
 import { CardRepository } from './card.repository';
 import { NoSqlDatabaseTesting } from '@j2blasco/ts-crud';
 import { DefaultSpacedRepetitionAlgorithmProvider } from 'src/providers/spaced-repetition-algorithm/providers/default-algorithm-provider';
 import { AlgorithmType } from 'src/providers/spaced-repetition-algorithm/core/spaced-repetition-scheduler.interface';
+import { describe, it, expect, beforeEach } from 'vitest';
 
 describe('Simplified Card System', () => {
   let db = new NoSqlDatabaseTesting();

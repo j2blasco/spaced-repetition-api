@@ -1,6 +1,7 @@
 {
   "compilerOptions": {
-    "target": "ES2020",
+    "target": "ESNext",
+    "lib": ["ESNext"],
     "module": "CommonJS",
     "esModuleInterop": true,
     "strict": true,
@@ -13,5 +14,5 @@
     }
   },
   "include": ["src/**/*.ts"],
-  "exclude": ["dist", "src/**/*.old/**"]
+  "exclude": ["dist"]
 }

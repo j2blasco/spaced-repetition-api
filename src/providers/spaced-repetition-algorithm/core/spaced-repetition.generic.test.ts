@@ -4,6 +4,7 @@ import {
 } from './spaced-repetition-scheduler.interface';
 import { calculateInterval } from '../providers/scheduling-utils';
 import { ISpacedRepetition } from './space-repetition.interface';
+import { beforeEach, describe, expect, it } from 'vitest';
 
 /**
  * Generic test suite for SpacedRepetitionAlgorithmProvider implementations

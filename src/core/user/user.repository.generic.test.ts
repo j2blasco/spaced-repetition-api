@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from '@jest/globals';
+import { describe, beforeEach, it, expect } from 'vitest';
 import {
   IUserRepository,
   CreateUserRequest,

@@ -1,6 +1,3 @@
-// Create a client sdk that allows creating a user, creating retreiving and reviewing cards using the rest api.
-// The client should require specifiying the server url, set it to localhost:4001 as default
-
 export interface ClientConfig {
   baseUrl?: string;
   timeout?: number;
@@ -141,56 +138,54 @@ export class SpacedRepetitionClient {
 
   // User Management
   async createUser(request: CreateUserRequest): Promise<User> {
-    return this.request<User>('/api/users', {
+    return this.request<User>('/users', {
       method: 'POST',
       body: JSON.stringify(request),
     });
   }
 
   async getUser(userId: string): Promise<User> {
-    return this.request<User>(`/api/users/${userId}`);
+    return this.request<User>(`/users/${userId}`);
   }
 
   async updateUser(userId: string, request: UpdateUserRequest): Promise<User> {
-    return this.request<User>(`/api/users/${userId}`, {
+    return this.request<User>(`/users/${userId}`, {
       method: 'PUT',
       body: JSON.stringify(request),
     });
   }
 
   async deleteUser(userId: string): Promise<void> {
-    await this.request<void>(`/api/users/${userId}`, {
+    await this.request<void>(`/users/${userId}`, {
       method: 'DELETE',
     });
   }
 
   // Card Management
   async createCard(request: CreateCardRequest): Promise<Card> {
-    return this.request<Card>('/api/cards', {
+    return this.request<Card>('/cards', {
       method: 'POST',
       body: JSON.stringify(request),
     });
   }
 
   async getCard(cardId: string): Promise<Card> {
-    return this.request<Card>(`/api/cards/${cardId}`);
+    return this.request<Card>(`/cards/${cardId}`);
   }
 
   async getUserCards(userId: string): Promise<Card[]> {
-    return this.request<Card[]>(
-      `/api/cards?userId=${encodeURIComponent(userId)}`,
-    );
+    return this.request<Card[]>(`/cards?userId=${encodeURIComponent(userId)}`);
   }
 
   async updateCard(cardId: string, request: UpdateCardRequest): Promise<Card> {
-    return this.request<Card>(`/api/cards/${cardId}`, {
+    return this.request<Card>(`/cards/${cardId}`, {
       method: 'PUT',
       body: JSON.stringify(request),
     });
   }
 
   async deleteCard(cardId: string): Promise<void> {
-    await this.request<void>(`/api/cards/${cardId}`, {
+    await this.request<void>(`/cards/${cardId}`, {
       method: 'DELETE',
     });
   }
@@ -212,14 +207,14 @@ export class SpacedRepetitionClient {
       params.append('currentDate', query.currentDate);
     }
 
-    return this.request<Card[]>(`/api/cards/due?${params.toString()}`);
+    return this.request<Card[]>(`/cards/due?${params.toString()}`);
   }
 
   async reviewCard(
     cardId: string,
     request: ReviewCardRequest,
   ): Promise<ReviewCardResponse> {
-    return this.request<ReviewCardResponse>(`/api/cards/${cardId}/review`, {
+    return this.request<ReviewCardResponse>(`/cards/${cardId}/review`, {
       method: 'POST',
       body: JSON.stringify(request),
     });
@@ -227,7 +222,7 @@ export class SpacedRepetitionClient {
 
   // Health Check
   async healthCheck(): Promise<{ status: string; timestamp: string }> {
-    return this.request<{ status: string; timestamp: string }>('/api/health');
+    return this.request<{ status: string; timestamp: string }>('/health');
   }
 
   // Utility Methods
