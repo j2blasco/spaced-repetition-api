@@ -310,7 +310,19 @@ export class SpacedRepetitionClient {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
 
-      return (await response.json()) as T;
+      // Handle empty responses (like 204 No Content for DELETE operations)
+      const contentLength = response.headers.get('content-length');
+      if (response.status === 204 || contentLength === '0') {
+        return undefined as T;
+      }
+
+      // Check if response has content before trying to parse JSON
+      const text = await response.text();
+      if (!text) {
+        return undefined as T;
+      }
+
+      return JSON.parse(text) as T;
     } catch (error) {
       clearTimeout(timeoutId);
       if (error instanceof Error && error.name === 'AbortError') {

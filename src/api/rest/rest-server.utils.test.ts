@@ -4,6 +4,9 @@ import { registerProviders } from 'src/providers/providers-registration/provider
 import { startRestApiServer } from './rest-server';
 import { firstValueFrom, Observable, Subject } from 'rxjs';
 
+// TODO: async disposable
+// https://chatgpt.com/c/68886c3d-d224-832f-be41-3ed007f2f013
+// wait for server to be closed
 export class RestApiTestbed implements Disposable {
   private _server$: Subject<Server> = new Subject<Server>();
   public server$: Observable<Server> = this._server$;
@@ -15,6 +18,7 @@ export class RestApiTestbed implements Disposable {
 
   constructor() {
     this.app = express();
+    // TODO: cors missing
     registerProviders();
     startRestApiServer({ app: this.app, port: 4001 }).then((server) => {
       this._server$.next(server);

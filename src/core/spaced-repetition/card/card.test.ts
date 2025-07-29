@@ -131,15 +131,10 @@ describe('Card Repository - Due Cards Functionality', () => {
     // Verify the card was created with expected scheduling
     expect(card.scheduling).toBeDefined();
     expect(card.scheduling.nextReviewDate).toBeInstanceOf(Date);
-    console.log(
-      'Card nextReviewDate:',
-      card.scheduling.nextReviewDate.toISOString(),
-    );
 
     // Query for due cards using a date well in the future
     const futureDate = new Date();
     futureDate.setDate(futureDate.getDate() + 7); // 1 week in future
-    console.log('Query currentDate:', futureDate.toISOString());
 
     const dueCardsResult = await repository.findDueCards({
       userId,
@@ -148,15 +143,6 @@ describe('Card Repository - Due Cards Functionality', () => {
 
     expect(() => dueCardsResult.unwrapOrThrow()).not.toThrow();
     const dueCards = dueCardsResult.unwrapOrThrow();
-
-    console.log('Due cards found:', dueCards.length);
-    console.log(
-      'Due cards:',
-      dueCards.map((c) => ({
-        id: c.id,
-        nextReviewDate: c.scheduling.nextReviewDate.toISOString(),
-      })),
-    );
 
     expect(dueCards).toHaveLength(1);
     expect(dueCards[0].id).toBe(card.id);
@@ -309,34 +295,10 @@ describe('Card Repository - Due Cards Functionality', () => {
     // Let's inspect the raw data in the database
     const allCardsResult = await repository.findByUserId(userId);
     expect(() => allCardsResult.unwrapOrThrow()).not.toThrow();
-    const allCards = allCardsResult.unwrapOrThrow();
-
-    console.log('All cards for user:', allCards.length);
-    if (allCards.length > 0) {
-      console.log(
-        'Card structure:',
-        JSON.stringify(
-          {
-            id: allCards[0].id,
-            userId: allCards[0].userId,
-            tags: allCards[0].tags,
-            scheduling: {
-              algorithmType: allCards[0].scheduling.algorithmType,
-              nextReviewDate:
-                allCards[0].scheduling.nextReviewDate.toISOString(),
-            },
-          },
-          null,
-          2,
-        ),
-      );
-    }
 
     // Now let's try to query directly with a simple condition to see if the database query works
     // This is to verify the database can find the card at all
     const simpleQuery = await repository.findByUserId(userId);
     expect(() => simpleQuery.unwrapOrThrow()).not.toThrow();
-    const simpleCards = simpleQuery.unwrapOrThrow();
-    console.log('Simple query found cards:', simpleCards.length);
   });
 });

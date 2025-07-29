@@ -2,27 +2,10 @@
 import { initModuleAlias } from './module-alias';
 initModuleAlias();
 
-import express from 'express';
-import { startRestApiServer } from './api/rest/rest-server';
-import { useCorsMiddleware } from './api/rest/utils/cors/cors-middleware';
-import { registerProviders } from './providers/providers-registration/providers';
-
-export function startServer(args: { envType: string; port: number }) {
-  const { envType, port } = args;
-  const app = express();
-
-  useCorsMiddleware(app);
-
-  registerProviders(envType);
-
-  startRestApiServer({
-    app,
-    port,
-    logGreeting: true,
-  });
-}
+import { startServer } from './start-server';
 
 startServer({
   envType: process.env.ENV_TYPE ?? 'alpha',
   port: process.env.PORT ? parseInt(process.env.PORT) : 4001,
+  logGreeting: true,
 });

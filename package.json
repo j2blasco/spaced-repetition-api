@@ -8,7 +8,7 @@
     "lint:fix": "npm run boundaries && eslint src --ext .ts",
     "lint": "npm run boundaries && eslint src --ext .ts",
     "script": "tsx --tsconfig ./scripts/tsconfig.json",
-    "test": "vitest run",
+    "test": "vitest run --bail 1",
     "test:watch": "vitest"
   },
   "dependencies": {
