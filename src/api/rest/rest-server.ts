@@ -16,7 +16,9 @@ export async function startRestApiServer(args: {
 
   const server = app.listen(port, () => {
     if (args.logGreeting) {
-      console.log(`🚀 Rest api server ready at http://localhost:${port}/rest`);
+      console.log(
+        `🚀 Rest api server ready at http://localhost:${port}${restApiBaseRoute}`,
+      );
     }
   });
 

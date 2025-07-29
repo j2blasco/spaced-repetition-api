@@ -1,24 +1,24 @@
 import SpacedRepetitionClient from './index';
-import { startServer } from '../index';
+// import { startServer } from '../index';
 import { beforeAll, describe, expect, it } from 'vitest';
 
 // TODO:
-describe.skip('SpacedRepetitionClient Integration Tests', () => {
+describe.only('SpacedRepetitionClient Integration Tests', () => {
   let client: SpacedRepetitionClient;
-  const testPort = 4002;
+  const testPort = 4001;
+  const baseUrl = `http://localhost:${testPort}`;
 
   beforeAll(() => {
-    startServer({
-      envType: 'test',
-      port: testPort,
-    });
+    // startServer({
+    //   envType: 'test',
+    //   port: testPort,
+    // });
 
-    // Initialize the client
     client = new SpacedRepetitionClient({
-      baseUrl: `http://localhost:${testPort}`,
+      baseUrl,
       timeout: 10000,
     });
-  }, 30000); // 30 second timeout for server startup
+  });
 
   describe('Health Check', () => {
     it('should respond to health check', async () => {

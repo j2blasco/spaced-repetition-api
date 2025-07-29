@@ -1,3 +1,7 @@
+import { usersEndpointRoute } from '../api/rest/endpoints/users/users';
+import { cardsEndpointRoute } from '../api/rest/endpoints/cards/cards-endpoint';
+import { healthEndpointRoute } from '../api/rest/endpoints/health/health';
+
 export interface ClientConfig {
   baseUrl?: string;
   timeout?: number;
@@ -92,100 +96,58 @@ export class SpacedRepetitionClient {
     this.timeout = config.timeout || 10000;
   }
 
-  private async request<T>(
-    endpoint: string,
-    options: RequestInit = {},
-  ): Promise<T> {
-    const url = `${this.baseUrl}${endpoint}`;
-
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), this.timeout);
-
-    try {
-      const response = await fetch(url, {
-        ...options,
-        signal: controller.signal,
-        headers: {
-          'Content-Type': 'application/json',
-          ...options.headers,
-        },
-      });
-
-      clearTimeout(timeoutId);
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(
-          errorData.error?.message ||
-            `HTTP ${response.status}: ${response.statusText}`,
-        );
-      }
-
-      // Handle 204 No Content responses
-      if (response.status === 204) {
-        return {} as T;
-      }
-
-      return await response.json();
-    } catch (error) {
-      clearTimeout(timeoutId);
-      if (error instanceof Error && error.name === 'AbortError') {
-        throw new Error(`Request timeout after ${this.timeout}ms`);
-      }
-      throw error;
-    }
-  }
-
   // User Management
   async createUser(request: CreateUserRequest): Promise<User> {
-    return this.request<User>('/users', {
+    return this.request<User>(usersEndpointRoute, {
       method: 'POST',
       body: JSON.stringify(request),
     });
   }
 
   async getUser(userId: string): Promise<User> {
-    return this.request<User>(`/users/${userId}`);
+    return this.request<User>(`${usersEndpointRoute}/${userId}`);
   }
 
   async updateUser(userId: string, request: UpdateUserRequest): Promise<User> {
-    return this.request<User>(`/users/${userId}`, {
+    return this.request<User>(`${usersEndpointRoute}/${userId}`, {
       method: 'PUT',
       body: JSON.stringify(request),
     });
   }
 
   async deleteUser(userId: string): Promise<void> {
-    await this.request<void>(`/users/${userId}`, {
+    await this.request<void>(`${usersEndpointRoute}/${userId}`, {
       method: 'DELETE',
     });
   }
 
   // Card Management
   async createCard(request: CreateCardRequest): Promise<Card> {
-    return this.request<Card>('/cards', {
+    return this.request<Card>(cardsEndpointRoute, {
       method: 'POST',
       body: JSON.stringify(request),
     });
   }
 
   async getCard(cardId: string): Promise<Card> {
-    return this.request<Card>(`/cards/${cardId}`);
+    return this.request<Card>(`${cardsEndpointRoute}/${cardId}`);
   }
 
   async getUserCards(userId: string): Promise<Card[]> {
-    return this.request<Card[]>(`/cards?userId=${encodeURIComponent(userId)}`);
+    return this.request<Card[]>(
+      `${cardsEndpointRoute}?userId=${encodeURIComponent(userId)}`,
+    );
   }
 
   async updateCard(cardId: string, request: UpdateCardRequest): Promise<Card> {
-    return this.request<Card>(`/cards/${cardId}`, {
+    return this.request<Card>(`${cardsEndpointRoute}/${cardId}`, {
       method: 'PUT',
       body: JSON.stringify(request),
     });
   }
 
   async deleteCard(cardId: string): Promise<void> {
-    await this.request<void>(`/cards/${cardId}`, {
+    await this.request<void>(`${cardsEndpointRoute}/${cardId}`, {
       method: 'DELETE',
     });
   }
@@ -207,22 +169,29 @@ export class SpacedRepetitionClient {
       params.append('currentDate', query.currentDate);
     }
 
-    return this.request<Card[]>(`/cards/due?${params.toString()}`);
+    return this.request<Card[]>(
+      `${cardsEndpointRoute}/due?${params.toString()}`,
+    );
   }
 
   async reviewCard(
     cardId: string,
     request: ReviewCardRequest,
   ): Promise<ReviewCardResponse> {
-    return this.request<ReviewCardResponse>(`/cards/${cardId}/review`, {
-      method: 'POST',
-      body: JSON.stringify(request),
-    });
+    return this.request<ReviewCardResponse>(
+      `${cardsEndpointRoute}/${cardId}/review`,
+      {
+        method: 'POST',
+        body: JSON.stringify(request),
+      },
+    );
   }
 
   // Health Check
   async healthCheck(): Promise<{ status: string; timestamp: string }> {
-    return this.request<{ status: string; timestamp: string }>('/health');
+    return this.request<{ status: string; timestamp: string }>(
+      healthEndpointRoute,
+    );
   }
 
   // Utility Methods
@@ -314,6 +283,41 @@ export class SpacedRepetitionClient {
       dueCards: dueCards.length,
       dueToday,
     };
+  }
+
+  private async request<T>(
+    endpoint: string,
+    options: RequestInit = {},
+  ): Promise<T> {
+    const url = `${this.baseUrl}${endpoint}`;
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), this.timeout);
+
+    try {
+      const response = await fetch(url, {
+        ...options,
+        signal: controller.signal,
+        headers: {
+          'Content-Type': 'application/json',
+          ...options.headers,
+        },
+      });
+
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      return (await response.json()) as T;
+    } catch (error) {
+      clearTimeout(timeoutId);
+      if (error instanceof Error && error.name === 'AbortError') {
+        throw new Error(`Request timeout after ${this.timeout}ms`);
+      }
+      throw error;
+    }
   }
 }
 
