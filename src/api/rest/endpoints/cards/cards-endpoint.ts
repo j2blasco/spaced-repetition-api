@@ -53,7 +53,6 @@ async function handleListCards(req: Request, res: Response) {
           });
           break;
         default:
-          // Handle any other error types
           res.status(500).json({
             error: 'An unexpected error occurred',
           });
@@ -103,7 +102,6 @@ async function handleGetCard(req: Request, res: Response) {
           });
           break;
         default:
-          // Handle any other error types
           res.status(500).json({
             error: 'An unexpected error occurred',
           });
@@ -142,7 +140,6 @@ async function handleUpdateCard(req: Request, res: Response) {
           });
           break;
         default:
-          // Handle any other error types
           res.status(500).json({
             error: 'An unexpected error occurred',
           });
@@ -177,7 +174,6 @@ async function handleDeleteCard(req: Request, res: Response) {
           });
           break;
         default:
-          // Handle any other error types
           res.status(500).json({
             error: 'An unexpected error occurred',
           });
@@ -228,7 +224,6 @@ async function handleGetDueCards(req: Request, res: Response) {
           });
           break;
         default:
-          // Handle any other error types
           res.status(500).json({
             error: 'An unexpected error occurred',
           });
