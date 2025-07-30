@@ -9,15 +9,21 @@ export async function startServer(args: {
   logGreeting: boolean;
 }) {
   const { envType, port, logGreeting } = args;
+
   const app = express();
 
   useCorsMiddleware(app);
 
   registerProviders(envType);
 
-  return startRestApiServer({
+  const server = await startRestApiServer({
     app,
     port,
     logGreeting,
   });
+
+  return {
+    app,
+    server,
+  };
 }

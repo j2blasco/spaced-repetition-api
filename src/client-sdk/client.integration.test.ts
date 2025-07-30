@@ -1,40 +1,22 @@
 import SpacedRepetitionClient from './index';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { Server } from 'http';
-import { startServer } from 'src/start-server';
-
-
-async function timeoutAsync(timeMs: number) {
-  return new Promise((resolve) => {
-    setTimeout(resolve, timeMs);
-  });
-}
+import { RestServerTestbed } from 'src/api/rest/rest-server-testbed.utils.test';
 
 describe('SpacedRepetitionClient Integration Tests', () => {
   let client: SpacedRepetitionClient;
-  const testPort = 4001;
-  const baseUrl = `http://localhost:${testPort}`;
-  let server: Server;
 
-  // TODO: use testbed instead
+  let testbed: RestServerTestbed;
+
   beforeAll(async () => {
-    // TODO: when a test is using the server, it doesnt close fast enough
-    await timeoutAsync(500);
-
-    server = await startServer({
-      envType: 'test',
-      port: testPort,
-      logGreeting: false,
-    });
-
+    testbed = await RestServerTestbed.create({ intialPort: 4000 });
     client = new SpacedRepetitionClient({
-      baseUrl,
+      baseUrl: `http://localhost:${testbed.port}`,
       timeout: 10000,
     });
   });
 
-  afterAll(() => {
-    server.close();
+  afterAll(async () => {
+    await testbed.dispose();
   });
 
   describe('Health Check', () => {

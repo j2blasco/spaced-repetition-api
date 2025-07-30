@@ -2,9 +2,9 @@ import { Express } from 'express';
 import request from 'supertest';
 import { AlgorithmType } from 'src/providers/spaced-repetition-algorithm/core/spaced-repetition-scheduler.interface';
 import { describe, it, expect } from 'vitest';
-import { RestApiTestbed } from '../../rest-server.utils.test';
 import { usersEndpointRoute } from '../users/users';
 import { cardsEndpointRoute } from './cards-endpoint';
+import { RestServerTestbed } from '../../rest-server-testbed.utils.test';
 
 describe('Card endpoints', () => {
   const createTestUser = async (app: Express) => {
@@ -44,8 +44,9 @@ describe('Card endpoints', () => {
 
   describe(`POST ${cardsEndpointRoute}`, () => {
     it('should create a new card successfully', async () => {
-      using testbed = new RestApiTestbed();
-      await testbed.waitForServer();
+      await using testbed = await RestServerTestbed.create({
+        intialPort: 4001,
+      });
       const app = testbed.app;
 
       const testUserId = await createTestUser(app);
@@ -78,8 +79,9 @@ describe('Card endpoints', () => {
     });
 
     it('should create a card with default algorithm type when not specified', async () => {
-      using testbed = new RestApiTestbed();
-      await testbed.waitForServer();
+      await using testbed = await RestServerTestbed.create({
+        intialPort: 4001,
+      });
       const app = testbed.app;
 
       const testUserId = await createTestUser(app);
@@ -101,8 +103,9 @@ describe('Card endpoints', () => {
 
   describe(`GET ${cardsEndpointRoute}`, () => {
     it('should list cards for a user', async () => {
-      using testbed = new RestApiTestbed();
-      await testbed.waitForServer();
+      await using testbed = await RestServerTestbed.create({
+        intialPort: 4001,
+      });
       const app = testbed.app;
 
       const testUserId = await createTestUser(app);
@@ -121,8 +124,9 @@ describe('Card endpoints', () => {
     });
 
     it('should return 400 when userId is missing', async () => {
-      using testbed = new RestApiTestbed();
-      await testbed.waitForServer();
+      await using testbed = await RestServerTestbed.create({
+        intialPort: 4001,
+      });
       const app = testbed.app;
 
       const response = await request(app).get(cardsEndpointRoute).expect(400);
@@ -136,8 +140,9 @@ describe('Card endpoints', () => {
 
   describe(`GET ${cardsEndpointRoute}/:id`, () => {
     it('should get a card by ID', async () => {
-      using testbed = new RestApiTestbed();
-      await testbed.waitForServer();
+      await using testbed = await RestServerTestbed.create({
+        intialPort: 4001,
+      });
       const app = testbed.app;
 
       const testUserId = await createTestUser(app);
@@ -153,8 +158,9 @@ describe('Card endpoints', () => {
     });
 
     it('should return 404 for non-existent card', async () => {
-      using testbed = new RestApiTestbed();
-      await testbed.waitForServer();
+      await using testbed = await RestServerTestbed.create({
+        intialPort: 4001,
+      });
       const app = testbed.app;
 
       const fakeId = '60f7b1b3e1b3f00001234567';
@@ -164,8 +170,9 @@ describe('Card endpoints', () => {
 
   describe(`PUT ${cardsEndpointRoute}/:id`, () => {
     it('should update a card', async () => {
-      using testbed = new RestApiTestbed();
-      await testbed.waitForServer();
+      await using testbed = await RestServerTestbed.create({
+        intialPort: 4001,
+      });
       const app = testbed.app;
 
       const testUserId = await createTestUser(app);
@@ -191,8 +198,9 @@ describe('Card endpoints', () => {
     });
 
     it('should return 404 for non-existent card', async () => {
-      using testbed = new RestApiTestbed();
-      await testbed.waitForServer();
+      await using testbed = await RestServerTestbed.create({
+        intialPort: 4001,
+      });
       const app = testbed.app;
 
       const fakeId = '60f7b1b3e1b3f00001234567';
@@ -210,8 +218,9 @@ describe('Card endpoints', () => {
 
   describe(`DELETE ${cardsEndpointRoute}/:id`, () => {
     it('should delete a card successfully', async () => {
-      using testbed = new RestApiTestbed();
-      await testbed.waitForServer();
+      await using testbed = await RestServerTestbed.create({
+        intialPort: 4001,
+      });
       const app = testbed.app;
 
       const testUserId = await createTestUser(app);
@@ -224,8 +233,9 @@ describe('Card endpoints', () => {
     });
 
     it('should return 404 for non-existent card', async () => {
-      using testbed = new RestApiTestbed();
-      await testbed.waitForServer();
+      await using testbed = await RestServerTestbed.create({
+        intialPort: 4001,
+      });
       const app = testbed.app;
 
       const fakeId = '60f7b1b3e1b3f00001234567';
@@ -235,8 +245,9 @@ describe('Card endpoints', () => {
 
   describe(`GET ${cardsEndpointRoute}/due`, () => {
     it('should get due cards for a user', async () => {
-      using testbed = new RestApiTestbed();
-      await testbed.waitForServer();
+      await using testbed = await RestServerTestbed.create({
+        intialPort: 4001,
+      });
       const app = testbed.app;
 
       const testUserId = await createTestUser(app);
@@ -251,8 +262,9 @@ describe('Card endpoints', () => {
     });
 
     it('should return 400 when userId is missing', async () => {
-      using testbed = new RestApiTestbed();
-      await testbed.waitForServer();
+      await using testbed = await RestServerTestbed.create({
+        intialPort: 4001,
+      });
       const app = testbed.app;
 
       const response = await request(app)

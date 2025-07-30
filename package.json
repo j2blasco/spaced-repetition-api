@@ -5,7 +5,7 @@
     "start": "node dist/index.js",
     "dev": "tsx --watch src/index.ts",
     "boundaries": "ts-boundaries",
-    "lint:fix": "npm run boundaries && eslint src --ext .ts",
+    "lint:fix": "npm run boundaries && eslint src --ext .ts --fix",
     "lint": "npm run boundaries && eslint src --ext .ts",
     "script": "tsx --tsconfig ./scripts/tsconfig.json",
     "test": "vitest run --bail 1",

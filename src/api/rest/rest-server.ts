@@ -14,14 +14,18 @@ export async function startRestApiServer(args: {
 
   setupEndpoints(app);
 
-  return new Promise<Server>((resolve) => {
-    const server = app.listen(port, () => {
+  return new Promise<Server>((resolve, reject) => {
+    const server = app.listen(port);
+    server.on('listening', () => {
       if (args.logGreeting) {
         console.log(
           `🚀 Rest api server ready at http://localhost:${port}${restApiBaseRoute}`,
         );
       }
       resolve(server);
+    });
+    server.on('error', (err) => {
+      reject(err);
     });
   });
 }

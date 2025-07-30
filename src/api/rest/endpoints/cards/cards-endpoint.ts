@@ -13,9 +13,10 @@ import { spacedRepetitionSchedulerInjectionToken } from 'src/providers/spaced-re
 import type { ReviewResponse } from 'src/core/spaced-repetition/review/review.interface';
 import { restApiBaseRoute } from '../endpoints-route';
 import { getCardRepository } from 'src/core/spaced-repetition/card/get-card-repository';
-import { pipe } from '@j2blasco/ts-pipe';
+import { asyncPipe, pipe } from '@j2blasco/ts-pipe';
 import {
   andThen,
+  andThenAsync,
   catchError,
   resultSuccessVoid,
 } from '@j2blasco/ts-result';
@@ -264,101 +265,73 @@ async function handleReviewCard(req: Request, res: Response) {
     return;
   }
 
-  try {
-    const cardRepo = getCardRepository();
-    const cardResult = await cardRepo.findById(cardId);
+  const cardRepo = getCardRepository();
+  const cardResult = await cardRepo.findById(cardId);
 
-    const cardOrError = await new Promise<{ success: true; card: any } | { success: false; error: any }>((resolve) => {
-      pipe(
-        cardResult,
-        andThen((card) => {
-          resolve({ success: true, card });
-          return resultSuccessVoid();
-        }),
-        catchError((error) => {
-          resolve({ success: false, error });
-          return resultSuccessVoid();
-        }),
+  const finalResult = await asyncPipe(
+    cardResult,
+    andThenAsync(async (card) => {
+      const spacedRepetition = DependencyInjector.inject(
+        spacedRepetitionSchedulerInjectionToken,
       );
-    });
 
-    if (!cardOrError.success) {
-      const statusCode = cardOrError.error?.code === 'not-found' ? 404 : 500;
-      res.status(statusCode).json({
-        error:
-          cardOrError.error?.code === 'not-found'
-            ? 'Card not found'
-            : cardOrError.error?.data?.message || 'An unexpected error occurred',
-      });
-      return;
-    }
-
-    const card = cardOrError.card;
-
-    const spacedRepetition = DependencyInjector.inject(
-      spacedRepetitionSchedulerInjectionToken,
-    );
-
-    const scheduler = spacedRepetition.getScheduler(
-      card.scheduling.algorithmType,
-    );
-
-    const recallLevel: RecallLevel =
-      reviewResponse === 'failed'
-        ? RecallLevel.HARD
-        : reviewResponse === 'good'
-          ? RecallLevel.MEDIUM
-          : RecallLevel.EASY;
-
-    const reviewResult = scheduler.reschedule({
-      currentScheduling: card.scheduling,
-      reviewResult: {
-        recallLevel,
-        reviewedAt,
-      },
-    });
-
-    const updateResult = await cardRepo.update(cardId, {
-      scheduling: reviewResult.newScheduling,
-    });
-
-    const updateOrError = await new Promise<{ success: true; updatedCard: any } | { success: false; error: any }>((resolve) => {
-      pipe(
-        updateResult,
-        andThen((updatedCard) => {
-          resolve({ success: true, updatedCard });
-          return resultSuccessVoid();
-        }),
-        catchError((error) => {
-          resolve({ success: false, error });
-          return resultSuccessVoid();
-        }),
+      const scheduler = spacedRepetition.getScheduler(
+        card.scheduling.algorithmType,
       );
-    });
 
-    if (!updateOrError.success) {
-      res.status(500).json({
-        error: updateOrError.error?.data?.message || 'Failed to update card',
+      const recallLevel: RecallLevel =
+        reviewResponse === 'failed'
+          ? RecallLevel.HARD
+          : reviewResponse === 'good'
+            ? RecallLevel.MEDIUM
+            : RecallLevel.EASY;
+
+      const reviewResult = scheduler.reschedule({
+        currentScheduling: card.scheduling,
+        reviewResult: {
+          recallLevel,
+          reviewedAt,
+        },
       });
-      return;
-    }
 
-    res.json({
-      cardId,
-      reviewResponse,
-      reviewedAt: reviewedAt.toISOString(),
-      newScheduling: reviewResult.newScheduling,
-      updatedCard: updateOrError.updatedCard,
-    });
-  } catch (error) {
-    console.error('Error in handleReviewCard:', error);
-    res.status(500).json({
-      error: {
-        code: 'INTERNAL_ERROR',
-        message: 'An unexpected error occurred while processing the review',
-      },
-    });
-  }
+      return cardRepo.update(cardId, {
+        scheduling: reviewResult.newScheduling,
+      });
+    }),
+  );
+
+  pipe(
+    finalResult,
+    andThen((updatedCard) => {
+      res.json({
+        cardId,
+        reviewResponse,
+        reviewedAt: reviewedAt.toISOString(),
+        newScheduling: updatedCard.scheduling,
+        updatedCard,
+      });
+      return resultSuccessVoid();
+    }),
+    catchError((error) => {
+      switch (error.code) {
+        case 'not-found':
+          res.status(404).json({
+            error: 'Card not found',
+          });
+          break;
+        case 'unknown':
+          res.status(500).json({
+            error: error.data.message,
+          });
+          break;
+        default:
+          res.status(500).json({
+            error: 'An unexpected error occurred',
+          });
+      }
+      return resultSuccessVoid();
+    }),
+  );
 }
 
 export function setupCardsEndpoints(app: Express) {

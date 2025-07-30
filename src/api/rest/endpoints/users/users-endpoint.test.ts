@@ -1,14 +1,15 @@
 import { Express } from 'express';
 import request from 'supertest';
 import { describe, it, expect } from 'vitest';
-import { RestApiTestbed } from '../../rest-server.utils.test';
+import { RestServerTestbed } from '../../rest-server-testbed.utils.test';
 import { usersEndpointRoute } from './users';
 
 describe('User endpoints', () => {
   describe(`POST ${usersEndpointRoute}`, () => {
     it('should create a user with default preferences', async () => {
-      using testbed = new RestApiTestbed();
-      await testbed.waitForServer();
+      await using testbed = await RestServerTestbed.create({
+        intialPort: 4001,
+      });
       const app = testbed.app;
 
       const response = await request(app)
@@ -23,8 +24,9 @@ describe('User endpoints', () => {
     });
 
     it('should create a new user with custom preferences', async () => {
-      using testbed = new RestApiTestbed();
-      await testbed.waitForServer();
+      await using testbed = await RestServerTestbed.create({
+        intialPort: 4001,
+      });
       const app = testbed.app;
 
       const userData = {
@@ -65,8 +67,9 @@ describe('User endpoints', () => {
       };
 
       it('should get a user by ID', async () => {
-        using testbed = new RestApiTestbed();
-        await testbed.waitForServer();
+        await using testbed = await RestServerTestbed.create({
+          intialPort: 4001,
+        });
         const app = testbed.app;
 
         const userId = await createTestUser(app);
@@ -82,8 +85,9 @@ describe('User endpoints', () => {
       });
 
       it('should return 404 for non-existent user', async () => {
-        using testbed = new RestApiTestbed();
-        await testbed.waitForServer();
+        await using testbed = await RestServerTestbed.create({
+          intialPort: 4001,
+        });
         const app = testbed.app;
 
         const fakeId = '60f7b1b3e1b3f00001234567';
@@ -91,8 +95,9 @@ describe('User endpoints', () => {
       });
 
       it('should handle invalid user ID format', async () => {
-        using testbed = new RestApiTestbed();
-        await testbed.waitForServer();
+        await using testbed = await RestServerTestbed.create({
+          intialPort: 4001,
+        });
         const app = testbed.app;
 
         const invalidId = 'invalid-id';
@@ -119,8 +124,9 @@ describe('User endpoints', () => {
       };
 
       it('should update user preferences', async () => {
-        using testbed = new RestApiTestbed();
-        await testbed.waitForServer();
+        await using testbed = await RestServerTestbed.create({
+          intialPort: 4001,
+        });
         const app = testbed.app;
 
         const userId = await createTestUser(app);
@@ -147,8 +153,9 @@ describe('User endpoints', () => {
       });
 
       it('should update partial preferences', async () => {
-        using testbed = new RestApiTestbed();
-        await testbed.waitForServer();
+        await using testbed = await RestServerTestbed.create({
+          intialPort: 4001,
+        });
         const app = testbed.app;
 
         const userId = await createTestUser(app);
@@ -172,8 +179,9 @@ describe('User endpoints', () => {
       });
 
       it('should return 404 for non-existent user', async () => {
-        using testbed = new RestApiTestbed();
-        await testbed.waitForServer();
+        await using testbed = await RestServerTestbed.create({
+          intialPort: 4001,
+        });
         const app = testbed.app;
 
         const fakeId = '60f7b1b3e1b3f00001234567';
@@ -190,8 +198,9 @@ describe('User endpoints', () => {
       });
 
       it('should handle empty update data', async () => {
-        using testbed = new RestApiTestbed();
-        await testbed.waitForServer();
+        await using testbed = await RestServerTestbed.create({
+          intialPort: 4001,
+        });
         const app = testbed.app;
 
         const userId = await createTestUser(app);
@@ -223,8 +232,9 @@ describe('User endpoints', () => {
       };
 
       it('should delete a user successfully', async () => {
-        using testbed = new RestApiTestbed();
-        await testbed.waitForServer();
+        await using testbed = await RestServerTestbed.create({
+          intialPort: 4001,
+        });
         const app = testbed.app;
 
         const userId = await createTestUser(app);
@@ -237,8 +247,9 @@ describe('User endpoints', () => {
       });
 
       it('should return 404 for non-existent user', async () => {
-        using testbed = new RestApiTestbed();
-        await testbed.waitForServer();
+        await using testbed = await RestServerTestbed.create({
+          intialPort: 4001,
+        });
         const app = testbed.app;
 
         const fakeId = '60f7b1b3e1b3f00001234567';
@@ -250,8 +261,9 @@ describe('User endpoints', () => {
       });
 
       it('should handle invalid user ID format', async () => {
-        using testbed = new RestApiTestbed();
-        await testbed.waitForServer();
+        await using testbed = await RestServerTestbed.create({
+          intialPort: 4001,
+        });
         const app = testbed.app;
 
         const invalidId = 'invalid-id';
@@ -265,8 +277,9 @@ describe('User endpoints', () => {
 
     describe('Error handling', () => {
       it('should handle invalid preference values gracefully', async () => {
-        using testbed = new RestApiTestbed();
-        await testbed.waitForServer();
+        await using testbed = await RestServerTestbed.create({
+          intialPort: 4001,
+        });
         const app = testbed.app;
 
         const userData = {
