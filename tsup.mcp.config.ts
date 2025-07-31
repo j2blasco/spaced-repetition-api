@@ -1,7 +1,10 @@
 import { defineConfig } from 'tsup'
 
 export default defineConfig({
-  entry: ['src/index.ts'],
+  entry: [
+    'src/api/mcp/simple-mcp.ts',
+    'src/api/mcp/spaced-repetition-mcp.ts',
+  ],
   format: ['esm'],
   dts: true,
   sourcemap: true,
@@ -10,5 +13,5 @@ export default defineConfig({
   treeshake: true,
   minify: false,
   target: 'ESNext',
-  outDir: 'dist/server',
+  outDir: 'dist/mcp',
 })
