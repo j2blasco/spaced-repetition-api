@@ -1,3 +1,6 @@
+* TODO:
+combine instructions with memory mcp
+
 * add infra
 
 * create modified version of sm2 algorithm which has an option "options: failedCards: { repeatBeforeGrade: n }" which should keep an internal repeatFailed state before grading a card as failed when failing a card.
@@ -54,6 +57,8 @@ In thi sexample, modified-sm2 is not a valid algorithm
 
 
 * clean up this endpoints, what is a study session in the mcp?
+Or maybe the studio session is useful? Review how it works
+
 ✅ Ran Create Study Session – spaced-repetition (MCP Server)
 
 Input
