@@ -37,9 +37,9 @@ export function testSpacedRepetitionScheduler(
         const initialData = scheduler.initializeCard();
 
         expect(initialData).toBeDefined();
-        expect(calculateInterval(initialData)).toBeGreaterThan(0);
+        expect(calculateInterval(initialData)).toBeGreaterThanOrEqual(0);
         expect(initialData.nextReviewDate).toBeInstanceOf(Date);
-        expect(initialData.nextReviewDate.getTime()).toBeGreaterThan(
+        expect(initialData.nextReviewDate.getTime()).toBeLessThanOrEqual(
           Date.now(),
         );
         expect(initialData.algorithmData).toBeDefined();
@@ -51,6 +51,14 @@ export function testSpacedRepetitionScheduler(
         const isCompatible = scheduler.isCompatibleSchedulingData(initialData);
 
         expect(isCompatible).toBe(true);
+      });
+
+      it('should schedule new cards for immediate review', () => {
+        const now = new Date();
+        const initialData = scheduler.initializeCard();
+        expect(initialData.nextReviewDate.getTime()).toBeLessThanOrEqual(
+          now.getTime(),
+        );
       });
     });
 
@@ -252,7 +260,7 @@ export function testSpacedRepetitionScheduler(
         // Should either return the same data or a valid migrated version
         if (migratedData) {
           expect(scheduler.isCompatibleSchedulingData(migratedData)).toBe(true);
-          expect(calculateInterval(migratedData)).toBeGreaterThan(0);
+          expect(calculateInterval(migratedData)).toBeGreaterThanOrEqual(0);
           expect(migratedData.nextReviewDate).toBeInstanceOf(Date);
         }
       });
@@ -273,7 +281,7 @@ export function testSpacedRepetitionScheduler(
             expect(scheduler.isCompatibleSchedulingData(migratedData)).toBe(
               true,
             );
-            expect(calculateInterval(migratedData)).toBeGreaterThan(0);
+            expect(calculateInterval(migratedData)).toBeGreaterThanOrEqual(0);
             expect(migratedData.nextReviewDate).toBeInstanceOf(Date);
           }
         }

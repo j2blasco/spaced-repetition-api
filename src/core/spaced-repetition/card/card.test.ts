@@ -276,8 +276,8 @@ describe('Card Repository - Due Cards Functionality', () => {
     expect(() => dueCardsResult.unwrapOrThrow()).not.toThrow();
     const dueCards = dueCardsResult.unwrapOrThrow();
 
-    // Since new cards are due tomorrow, querying with today's date should return 0 cards
-    expect(dueCards).toHaveLength(0);
+    // Since new cards are now immediately due, querying with today's date should return the card
+    expect(dueCards).toHaveLength(1);
   });
 
   it('should debug the database storage format', async () => {

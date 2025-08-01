@@ -123,7 +123,7 @@ export function testSpacedRepetitionAlgorithmProvider(
           // Basic functionality test
           const initialData = scheduler.initializeCard();
           expect(initialData).toBeDefined();
-          expect(calculateInterval(initialData)).toBeGreaterThan(0);
+          expect(calculateInterval(initialData)).toBe(0);
           expect(scheduler.isCompatibleSchedulingData(initialData)).toBe(true);
         }
       });

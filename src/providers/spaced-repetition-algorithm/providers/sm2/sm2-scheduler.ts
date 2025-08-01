@@ -24,7 +24,8 @@ export class SM2Scheduler
    */
   initializeCard(): CardSchedulingData<SM2AlgorithmData> {
     const now = new Date();
-    const nextReviewDate = new Date(now.getTime() + 24 * 60 * 60 * 1000); // 1 day
+    // New cards should be immediately available for their first review
+    const nextReviewDate = new Date(now.getTime());
 
     return {
       algorithmType: this.algorithmType,

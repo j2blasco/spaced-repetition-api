@@ -74,29 +74,17 @@ describe('Spaced Repetition System - Full User Story', () => {
       createdCards.push(cardResult.unwrapOrThrow());
     }
 
-    // 3. Verify initial state - no cards are due yet (new cards have future due dates)
+    // 3. Verify initial state - new cards should be immediately available for review
     const initialDueCardsResult = await cardRepo.findDueCards({
       userId: user.id,
       currentDate: startDate,
     });
     expect(() => initialDueCardsResult.unwrapOrThrow()).not.toThrow();
     const initialDueCards = initialDueCardsResult.unwrapOrThrow();
-    expect(initialDueCards).toHaveLength(0);
+    expect(initialDueCards).toHaveLength(3); // All new cards should be immediately due
 
-    // 4. Advance time to when cards become due (typically next day)
-    const nextDay = new Date('2024-01-02T09:00:00Z');
-    vi.setSystemTime(nextDay);
-
-    const dueCardsResult = await cardRepo.findDueCards({
-      userId: user.id,
-      currentDate: nextDay,
-    });
-    expect(() => dueCardsResult.unwrapOrThrow()).not.toThrow();
-    const dueCards = dueCardsResult.unwrapOrThrow();
-    expect(dueCards.length).toBeGreaterThan(0);
-
-    // 5. Review the first card with different responses
-    const firstCard = dueCards[0];
+    // 4. Review the first card to test rescheduling
+    const firstCard = initialDueCards[0];
     const scheduler = spacedRepetition.getScheduler(
       firstCard.scheduling.algorithmType,
     );
@@ -106,21 +94,21 @@ describe('Spaced Repetition System - Full User Story', () => {
       currentScheduling: firstCard.scheduling,
       reviewResult: {
         recallLevel: RecallLevel.MEDIUM, // 'good'
-        reviewedAt: nextDay,
+        reviewedAt: startDate,
       },
     });
 
     expect(goodReview.newScheduling.nextReviewDate).toBeInstanceOf(Date);
     expect(goodReview.newScheduling.nextReviewDate.getTime()).toBeGreaterThan(
-      nextDay.getTime(),
+      startDate.getTime(),
     );
 
-    // 6. Simulate reviewing with "failed" (forgot the answer)
+    // 5. Simulate reviewing with "failed" (forgot the answer)
     const againReview = scheduler.reschedule({
       currentScheduling: firstCard.scheduling,
       reviewResult: {
         recallLevel: RecallLevel.HARD, // 'failed'
-        reviewedAt: nextDay,
+        reviewedAt: startDate,
       },
     });
 
@@ -130,11 +118,11 @@ describe('Spaced Repetition System - Full User Story', () => {
       againReview.newScheduling.nextReviewDate.getTime(),
     ).toBeLessThanOrEqual(goodReview.newScheduling.nextReviewDate.getTime());
 
-    // 7. Test filtering by tags
+    // 6. Test filtering by tags
     const spanishGreetingsResult = await cardRepo.findDueCards({
       userId: user.id,
       tags: ['greetings'],
-      currentDate: nextDay,
+      currentDate: startDate,
     });
     expect(() => spanishGreetingsResult.unwrapOrThrow()).not.toThrow();
     const spanishGreetings = spanishGreetingsResult.unwrapOrThrow();
@@ -143,7 +131,7 @@ describe('Spaced Repetition System - Full User Story', () => {
       spanishGreetings.every((card) => card.tags.includes('greetings')),
     ).toBe(true);
 
-    // 8. Advance time to test long-term scheduling
+    // 7. Advance time to test long-term scheduling
     const oneWeekLater = new Date('2024-01-08T09:00:00Z');
     vi.setSystemTime(oneWeekLater);
 
@@ -158,11 +146,11 @@ describe('Spaced Repetition System - Full User Story', () => {
     // Verify the spaced repetition system is working
     expect(laterDueCards.length).toBeGreaterThanOrEqual(0);
 
-    // 9. Test user preferences are respected
+    // 8. Test user preferences are respected
     expect(user.preferences.maxNewCardsPerDay).toBe(10);
     expect(user.preferences.defaultAlgorithm).toBe('sm2');
 
-    // 10. Verify we can update user preferences
+    // 9. Verify we can update user preferences
     const updateResult = await userRepo.update(user.id, {
       preferences: { maxNewCardsPerDay: 15 },
     });
