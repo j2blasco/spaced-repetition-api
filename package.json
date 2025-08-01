@@ -1,20 +1,22 @@
 {
   "type": "module",
   "scripts": {
-    "build": "npm run build:server && npm run build:mcp",
-    "build:server": "npm run clean:server && tsup",
-    "build:mcp": "npm run clean:mcp && tsup --config tsup.mcp.config.ts",
-    "clean:server": "shx rm -rf dist/server",
-    "clean:mcp": "shx rm -rf dist/mcp",
-    "start": "node dist/server/index.js",
-    "tsx": "tsx",
-    "dev": "tsx --watch src/index.ts",
     "boundaries": "ts-boundaries",
+    "build:mcp": "npm run clean:mcp && tsup --config tsup.mcp.config.ts",
+    "build:server": "npm run clean:server && tsup",
+    "build": "npm run build:server && npm run build:mcp",
+    "clean:mcp": "shx rm -rf dist/mcp",
+    "clean:server": "shx rm -rf dist/server",
+    "dev:mcp-http": "tsx src/api/mcp/start-http-server.ts",
+    "dev": "tsx --watch src/index.ts",
     "lint:fix": "npm run boundaries && eslint src --ext .ts --fix",
     "lint": "npm run boundaries && eslint src --ext .ts",
     "script": "tsx --tsconfig ./scripts/tsconfig.json",
+    "start:mcp-http": "node dist/mcp/start-mcp-http-server.js",
+    "start": "node dist/server/index.js",
+    "test:watch": "vitest",
     "test": "vitest run --bail 1",
-    "test:watch": "vitest"
+    "tsx": "tsx"
   },
   "dependencies": {
     "@j2blasco/ts-crud": "^0.1.9",
