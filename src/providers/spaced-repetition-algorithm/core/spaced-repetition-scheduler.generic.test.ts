@@ -203,8 +203,6 @@ export function testSpacedRepetitionScheduler(
 
         const response = scheduler.reschedule(request);
 
-        // Note: lastReviewDate is no longer part of the interface
-        // The review date is tracked separately in the ReviewResult
         expect(response.newScheduling.nextReviewDate).toBeDefined();
       });
 

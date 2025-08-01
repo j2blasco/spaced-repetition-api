@@ -363,5 +363,69 @@ describe('SpacedRepetitionClient Integration Tests', () => {
       expect(typeof stats.totalCards).toBe('number');
       expect(stats.totalCards).toBeGreaterThanOrEqual(0);
     });
+
+    it('should create card, review it to reschedule, and verify due cards behavior', async () => {
+      // Create a new card for this specific test
+      const card = await client.createCard({
+        userId,
+        tags: ['scheduling-test'],
+        data: {
+          question: 'What is the test for scheduling?',
+          answer: 'Verifying review scheduling works correctly',
+        },
+        algorithmType: 'sm2',
+      });
+
+      // Verify the new card is immediately due
+      const initialDueCards = await client.getDueCards({
+        userId,
+        tags: ['scheduling-test'],
+        limit: 10,
+      });
+      expect(initialDueCards.some((c) => c.id === card.id)).toBe(true);
+
+      // Review the card with a 'good' response to reschedule it
+      const reviewResponse = await client.reviewCard(card.id, {
+        response: 'good',
+        reviewedAt: new Date().toISOString(),
+      });
+
+      expect(reviewResponse).toBeDefined();
+      expect(reviewResponse.cardId).toBe(card.id);
+      expect(reviewResponse.reviewResponse).toBe('good');
+      expect(reviewResponse.newScheduling).toBeDefined();
+
+      // Verify the card is now scheduled for a future date
+      const nextReviewDate = new Date(
+        reviewResponse.newScheduling.nextReviewDate,
+      );
+      const now = new Date();
+      expect(nextReviewDate.getTime()).toBeGreaterThan(now.getTime());
+
+      // Verify the card is no longer in due cards (since it's scheduled for the future)
+      const currentDueCards = await client.getDueCards({
+        userId,
+        tags: ['scheduling-test'],
+        limit: 10,
+      });
+      expect(currentDueCards.some((c) => c.id === card.id)).toBe(false);
+
+      // Simulate time passing to when the card should be due again
+      // Note: In a real scenario with time manipulation, we could advance time
+      // For now, we'll verify the scheduling data is correct
+      const updatedCard = await client.getCard(card.id);
+      expect(updatedCard.scheduling.nextReviewDate).toBe(
+        reviewResponse.newScheduling.nextReviewDate,
+      );
+
+      // Verify SM2 algorithm data is updated correctly
+      const sm2Data = updatedCard.scheduling.algorithmData as {
+        efactor: number;
+        repetition: number;
+      };
+      expect(sm2Data.repetition).toBeGreaterThan(0);
+      expect(sm2Data.efactor).toBeDefined();
+      expect(sm2Data.efactor).toBeGreaterThan(1.0);
+    });
   });
 });

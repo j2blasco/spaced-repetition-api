@@ -1,7 +1,3 @@
-// TODO: probably we don't need module alias if we use tsup and tsx
-import { initModuleAlias } from './module-alias';
-initModuleAlias();
-
 import { startServer } from './start-server';
 
 startServer({

@@ -1,9 +1,12 @@
 {
+  "type": "module",
   "scripts": {
-    "build": "npm run clean && tsup",
-    "build:mcp": "npm run clean && tsup --config tsup.mcp.config.ts",
-    "clean": "shx rm -rf dist types",
-    "start": "node dist/index.js",
+    "build": "npm run build:server && npm run build:mcp",
+    "build:server": "npm run clean:server && tsup",
+    "build:mcp": "npm run clean:mcp && tsup --config tsup.mcp.config.ts",
+    "clean:server": "shx rm -rf dist/server",
+    "clean:mcp": "shx rm -rf dist/mcp",
+    "start": "node dist/server/index.js",
     "tsx": "tsx",
     "dev": "tsx --watch src/index.ts",
     "boundaries": "ts-boundaries",
@@ -21,7 +24,6 @@
     "@modelcontextprotocol/sdk": "^1.17.0",
     "cors": "^2.8.5",
     "express": "^5.1.0",
-    "module-alias": "^2.2.3",
     "rxjs": "^7.8.2"
   },
   "devDependencies": {
