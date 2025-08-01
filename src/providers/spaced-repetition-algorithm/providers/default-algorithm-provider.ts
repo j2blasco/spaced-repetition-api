@@ -3,7 +3,8 @@ import {
   AlgorithmType,
   ISpacedRepetitionScheduler,
 } from '../core/spaced-repetition-scheduler.interface';
-import { SM2Scheduler } from './sm2/sm2-scheduler';
+import { ModifiedSM2Scheduler } from './modified-sm2/modified-sm2-scheduler';
+// import { SM2Scheduler } from './sm2/sm2-scheduler';
 
 /**
  * Default implementation of SpacedRepetitionAlgorithmProvider
@@ -18,8 +19,14 @@ export class DefaultSpacedRepetitionAlgorithmProvider
   >();
 
   constructor() {
-    // Register SM2 scheduler by default
-    this.registerScheduler(new SM2Scheduler());
+    // this.registerScheduler(new SM2Scheduler());
+    this.registerScheduler(
+      new ModifiedSM2Scheduler({
+        failedCards: {
+          repeatBeforeGrade: 1,
+        },
+      }),
+    );
   }
 
   /**
