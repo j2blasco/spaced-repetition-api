@@ -1,6 +1,7 @@
-import { usersEndpointRoute } from '../api/rest/endpoints/users/users';
-import { cardsEndpointRoute } from '../api/rest/endpoints/cards/cards-endpoint';
-import { healthEndpointRoute } from '../api/rest/endpoints/health/health';
+const restApiBaseRoute = '/api/rest';
+const usersEndpointRoute = `${restApiBaseRoute}/users`;
+const cardsEndpointRoute = `${restApiBaseRoute}/cards`;
+const healthEndpointRoute = `${restApiBaseRoute}/health`;
 
 export interface ClientConfig {
   baseUrl?: string;
