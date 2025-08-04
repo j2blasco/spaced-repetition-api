@@ -1,3 +1,5 @@
+* Adding a card that already exists should review the card as failed instead of adding the card.
+
 * TODO:
 combine instructions with memory mcp
 
