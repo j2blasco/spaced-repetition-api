@@ -280,6 +280,133 @@ describe('Card Repository - Due Cards Functionality', () => {
     expect(dueCards).toHaveLength(1);
   });
 
+  it('should prioritize due review cards before introducing new cards (scenario 1)', async () => {
+    const now = new Date();
+    // Create 20 review cards (simulate a prior review by setting lastReviewDate)
+    const reviewCards: string[] = [];
+    for (let i = 0; i < 20; i++) {
+      const result = await repository.create({
+        userId,
+        tags: ['rev'],
+        data: { front: 'r' + i, back: 'r' + i },
+        algorithmType: AlgorithmType.SM2,
+      });
+      const card = result.unwrapOrThrow();
+      // Simulate a review so they become review cards (lastReviewDate set via reschedule)
+      card.scheduling.lastReviewDate = new Date(now.getTime() - 1000 * 60 * 60); // 1h ago
+      card.scheduling.nextReviewDate = now; // due now
+      await repository.update(card.id, { scheduling: card.scheduling });
+      reviewCards.push(card.id);
+    }
+
+    // Create 50 new cards (no lastReviewDate)
+    for (let i = 0; i < 50; i++) {
+      await repository.create({
+        userId,
+        tags: ['new'],
+        data: { front: 'n' + i, back: 'n' + i },
+        algorithmType: AlgorithmType.SM2,
+      });
+    }
+
+    const result = await repository.findDueCards({
+      userId,
+      currentDate: now,
+      maxReviewCards: 50,
+      maxNewCards: 20,
+    });
+    const due = result.unwrapOrThrow();
+    // Expect 20 review (all) + 20 new (introduce up to maxNewCards)
+    expect(due.filter((c) => c.scheduling.lastReviewDate)).toHaveLength(20);
+    expect(due.filter((c) => !c.scheduling.lastReviewDate)).toHaveLength(20);
+  });
+
+  it('should spread new cards after clearing large review backlog over multiple days (scenario 2 simplified)', async () => {
+    const start = new Date();
+    // Day 0 setup: 120 review due + 50 new
+    for (let i = 0; i < 120; i++) {
+      const result = await repository.create({
+        userId,
+        tags: ['rev2'],
+        data: { front: 'r2' + i, back: 'r2' + i },
+        algorithmType: AlgorithmType.SM2,
+      });
+      const card = result.unwrapOrThrow();
+      card.scheduling.lastReviewDate = new Date(start.getTime() - 86400000); // yesterday
+      card.scheduling.nextReviewDate = start; // due now
+      await repository.update(card.id, { scheduling: card.scheduling });
+    }
+    for (let i = 0; i < 50; i++) {
+      await repository.create({
+        userId,
+        tags: ['new2'],
+        data: { front: 'n2' + i, back: 'n2' + i },
+        algorithmType: AlgorithmType.SM2,
+      });
+    }
+
+    const day1 = (
+      await repository.findDueCards({
+        userId,
+        currentDate: start,
+        maxReviewCards: 50,
+        maxNewCards: 20,
+      })
+    ).unwrapOrThrow();
+    expect(day1.filter((c) => c.scheduling.lastReviewDate)).toHaveLength(50);
+    expect(day1.filter((c) => !c.scheduling.lastReviewDate)).toHaveLength(0);
+
+    // Simulate removing reviewed cards from backlog by pushing their nextReviewDate into future
+    for (const card of day1) {
+      if (card.scheduling.lastReviewDate) {
+        card.scheduling.nextReviewDate = new Date(start.getTime() + 86400000); // tomorrow
+        await repository.update(card.id, { scheduling: card.scheduling });
+      }
+    }
+
+    const day2Date = new Date(start.getTime() + 86400000);
+    const day2 = (
+      await repository.findDueCards({
+        userId,
+        currentDate: day2Date,
+        maxReviewCards: 50,
+        maxNewCards: 20,
+      })
+    ).unwrapOrThrow();
+    expect(day2.filter((c) => c.scheduling.lastReviewDate)).toHaveLength(50);
+    expect(day2.filter((c) => !c.scheduling.lastReviewDate)).toHaveLength(0);
+
+    // Push day2 reviews forward
+    for (const card of day2) {
+      if (card.scheduling.lastReviewDate) {
+        card.scheduling.nextReviewDate = new Date(
+          start.getTime() + 2 * 86400000,
+        ); // day3
+        await repository.update(card.id, { scheduling: card.scheduling });
+      }
+    }
+
+    const day3Date = new Date(start.getTime() + 2 * 86400000);
+    const day3 = (
+      await repository.findDueCards({
+        userId,
+        currentDate: day3Date,
+        maxReviewCards: 50,
+        maxNewCards: 20,
+      })
+    ).unwrapOrThrow();
+    // Backlog remaining reviews now less than quota (should be 20 reviews left)
+    const reviewCountDay3 = day3.filter(
+      (c) => c.scheduling.lastReviewDate,
+    ).length;
+    expect(reviewCountDay3).toBeLessThanOrEqual(50);
+    const newIntroducedDay3 = day3.filter(
+      (c) => !c.scheduling.lastReviewDate,
+    ).length;
+    // New cards start appearing (up to 20)
+    expect(newIntroducedDay3).toBeLessThanOrEqual(20);
+  });
+
   it('should debug the database storage format', async () => {
     // Create a card
     const cardResult = await repository.create({

@@ -35,6 +35,7 @@ describe('ModifiedSM2Scheduler', () => {
       const originalData: CardSchedulingData<ModifiedSM2AlgorithmData> = {
         algorithmType: AlgorithmType.SM2,
         nextReviewDate: baseDate,
+  lastReviewDate: null,
         algorithmData: {
           efactor: 2.3,
           repetition: 2,
@@ -69,6 +70,74 @@ describe('ModifiedSM2Scheduler', () => {
   });
 
   describe('failed card repetition logic', () => {
+    it('should schedule +45s for every failed-state repetition across repeatBeforeGrade variants', () => {
+      const variants = [1, 2, 3, 5];
+      for (const repeatBeforeGrade of variants) {
+        const schedulerVariant = new ModifiedSM2Scheduler({
+          failedCards: { repeatBeforeGrade },
+        });
+        let current = schedulerVariant.initializeCard();
+        const reviewedAtBase = new Date(baseDate.getTime() + 1000);
+
+        // Initial failure
+        let response = schedulerVariant.reschedule({
+          currentScheduling: current,
+          reviewResult: {
+            recallLevel: RecallLevel.HARD,
+            reviewedAt: reviewedAtBase,
+          },
+        });
+        expect(response.newScheduling.nextReviewDate.getTime()).toBe(
+          reviewedAtBase.getTime() + 45 * 1000,
+        );
+        expect(
+          response.newScheduling.algorithmData.recallsNeededBeforeFailGrade,
+        ).toBe(repeatBeforeGrade);
+        current = response.newScheduling;
+
+        // Interim recalls while still failed
+        for (let remaining = repeatBeforeGrade; remaining > 1; remaining--) {
+          const stepTime = new Date(
+            reviewedAtBase.getTime() + remaining * 1000,
+          );
+          response = schedulerVariant.reschedule({
+            currentScheduling: current,
+            reviewResult: {
+              recallLevel: RecallLevel.EASY,
+              reviewedAt: stepTime,
+            },
+          });
+          expect(response.wasSuccessful).toBe(false);
+          expect(response.newScheduling.algorithmData.isFailed).toBe(true);
+          expect(
+            response.newScheduling.algorithmData.recallsNeededBeforeFailGrade,
+          ).toBe(remaining - 1);
+          expect(response.newScheduling.nextReviewDate.getTime()).toBe(
+            stepTime.getTime() + 45 * 1000,
+          );
+          current = response.newScheduling;
+        }
+
+        // Final recall exits failed state
+        const finalTime = new Date(
+          reviewedAtBase.getTime() + (repeatBeforeGrade + 2) * 1000,
+        );
+        response = schedulerVariant.reschedule({
+          currentScheduling: current,
+          reviewResult: {
+            recallLevel: RecallLevel.EASY,
+            reviewedAt: finalTime,
+          },
+        });
+        expect(response.newScheduling.algorithmData.isFailed).toBe(false);
+        expect(
+          response.newScheduling.algorithmData.recallsNeededBeforeFailGrade,
+        ).toBe(0);
+        expect(response.newScheduling.nextReviewDate.getTime()).toBeGreaterThan(
+          finalTime.getTime(),
+        );
+      }
+    });
     it('should implement the complete failed card flow as described in requirements', () => {
       // Start with a new card
       let currentScheduling = scheduler.initializeCard();
@@ -92,7 +161,7 @@ describe('ModifiedSM2Scheduler', () => {
 
       currentScheduling = response.newScheduling;
 
-      // 2. Review card as failed -> scheduled for now (4 recalls needed)
+  // 2. Review card as failed -> scheduled 45s later (4 recalls needed)
       request = {
         currentScheduling,
         reviewResult: {
@@ -107,11 +176,13 @@ describe('ModifiedSM2Scheduler', () => {
       expect(
         response.newScheduling.algorithmData.recallsNeededBeforeFailGrade,
       ).toBe(4);
-      expect(response.newScheduling.nextReviewDate).toEqual(reviewedAt);
+      expect(response.newScheduling.nextReviewDate.getTime()).toBe(
+        reviewedAt.getTime() + 45 * 1000,
+      );
 
       currentScheduling = response.newScheduling;
 
-      // 3. Review card as easy -> scheduled for now (3 recalls needed)
+  // 3. Review card as easy -> scheduled 45s later (3 recalls needed)
       request = {
         currentScheduling,
         reviewResult: {
@@ -126,11 +197,13 @@ describe('ModifiedSM2Scheduler', () => {
       expect(
         response.newScheduling.algorithmData.recallsNeededBeforeFailGrade,
       ).toBe(3);
-      expect(response.newScheduling.nextReviewDate).toEqual(reviewedAt);
+      expect(response.newScheduling.nextReviewDate.getTime()).toBe(
+        reviewedAt.getTime() + 45 * 1000,
+      );
 
       currentScheduling = response.newScheduling;
 
-      // 4. Review card as easy -> scheduled for now (2 recalls needed)
+  // 4. Review card as easy -> scheduled 45s later (2 recalls needed)
       request = {
         currentScheduling,
         reviewResult: {
@@ -145,11 +218,13 @@ describe('ModifiedSM2Scheduler', () => {
       expect(
         response.newScheduling.algorithmData.recallsNeededBeforeFailGrade,
       ).toBe(2);
-      expect(response.newScheduling.nextReviewDate).toEqual(reviewedAt);
+      expect(response.newScheduling.nextReviewDate.getTime()).toBe(
+        reviewedAt.getTime() + 45 * 1000,
+      );
 
       currentScheduling = response.newScheduling;
 
-      // 5. Review card as failed -> scheduled for now (4 recalls needed - reset)
+  // 5. Review card as failed -> scheduled 45s later (4 recalls needed - reset)
       request = {
         currentScheduling,
         reviewResult: {
@@ -164,11 +239,13 @@ describe('ModifiedSM2Scheduler', () => {
       expect(
         response.newScheduling.algorithmData.recallsNeededBeforeFailGrade,
       ).toBe(4); // Reset to 4
-      expect(response.newScheduling.nextReviewDate).toEqual(reviewedAt);
+      expect(response.newScheduling.nextReviewDate.getTime()).toBe(
+        reviewedAt.getTime() + 45 * 1000,
+      );
 
       currentScheduling = response.newScheduling;
 
-      // 6. Review card as easy -> scheduled for now (3 recalls needed)
+  // 6. Review card as easy -> scheduled 45s later (3 recalls needed)
       request = {
         currentScheduling,
         reviewResult: {
@@ -183,11 +260,13 @@ describe('ModifiedSM2Scheduler', () => {
       expect(
         response.newScheduling.algorithmData.recallsNeededBeforeFailGrade,
       ).toBe(3);
-      expect(response.newScheduling.nextReviewDate).toEqual(reviewedAt);
+      expect(response.newScheduling.nextReviewDate.getTime()).toBe(
+        reviewedAt.getTime() + 45 * 1000,
+      );
 
       currentScheduling = response.newScheduling;
 
-      // 7. Review card as easy -> scheduled for now (2 recalls needed)
+  // 7. Review card as easy -> scheduled 45s later (2 recalls needed)
       request = {
         currentScheduling,
         reviewResult: {
@@ -202,11 +281,13 @@ describe('ModifiedSM2Scheduler', () => {
       expect(
         response.newScheduling.algorithmData.recallsNeededBeforeFailGrade,
       ).toBe(2);
-      expect(response.newScheduling.nextReviewDate).toEqual(reviewedAt);
+      expect(response.newScheduling.nextReviewDate.getTime()).toBe(
+        reviewedAt.getTime() + 45 * 1000,
+      );
 
       currentScheduling = response.newScheduling;
 
-      // 8. Review card as easy -> scheduled for now (1 recall needed)
+  // 8. Review card as easy -> scheduled 45s later (1 recall needed)
       request = {
         currentScheduling,
         reviewResult: {
@@ -221,7 +302,9 @@ describe('ModifiedSM2Scheduler', () => {
       expect(
         response.newScheduling.algorithmData.recallsNeededBeforeFailGrade,
       ).toBe(1);
-      expect(response.newScheduling.nextReviewDate).toEqual(reviewedAt);
+      expect(response.newScheduling.nextReviewDate.getTime()).toBe(
+        reviewedAt.getTime() + 45 * 1000,
+      );
 
       currentScheduling = response.newScheduling;
 
@@ -266,6 +349,9 @@ describe('ModifiedSM2Scheduler', () => {
       expect(
         response.newScheduling.algorithmData.recallsNeededBeforeFailGrade,
       ).toBe(2);
+      expect(response.newScheduling.nextReviewDate.getTime()).toBe(
+        reviewedAt.getTime() + 45 * 1000,
+      );
 
       currentScheduling = response.newScheduling;
 
@@ -283,6 +369,9 @@ describe('ModifiedSM2Scheduler', () => {
         response.newScheduling.algorithmData.recallsNeededBeforeFailGrade,
       ).toBe(1);
       expect(response.newScheduling.algorithmData.isFailed).toBe(true);
+      expect(response.newScheduling.nextReviewDate.getTime()).toBe(
+        reviewedAt.getTime() + 45 * 1000,
+      );
 
       currentScheduling = response.newScheduling;
 
@@ -324,7 +413,7 @@ describe('ModifiedSM2Scheduler', () => {
       expect(
         response.newScheduling.algorithmData.recallsNeededBeforeFailGrade,
       ).toBe(0);
-      expect(response.newScheduling.algorithmData.repetition).toBe(1); // Incremented
+      expect(response.newScheduling.algorithmData.repetition).toBe(1);
       expect(response.newScheduling.nextReviewDate.getTime()).toBeGreaterThan(
         reviewedAt.getTime(),
       );
@@ -378,7 +467,7 @@ describe('ModifiedSM2Scheduler', () => {
         },
       };
 
-      expect(scheduler.isCompatibleSchedulingData(invalidData)).toBe(false);
+  expect(scheduler.isCompatibleSchedulingData(invalidData)).toBe(false);
     });
 
     it('should reject negative repetition', () => {

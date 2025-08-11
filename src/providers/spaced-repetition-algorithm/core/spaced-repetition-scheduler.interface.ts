@@ -15,6 +15,11 @@ export enum AlgorithmType {
 export type CardSchedulingData<TAlgorithmData = unknown> = {
   algorithmType: AlgorithmType;
   nextReviewDate: Date;
+  /**
+   * The date/time when the card was last reviewed. Null for brand new cards that have never been reviewed.
+   * This enables distinguishing "new" cards (no last review) from review cards (have at least one review).
+   */
+  lastReviewDate?: Date | null;
   algorithmData: TAlgorithmData; // algorithm-specific parameters
 };
 

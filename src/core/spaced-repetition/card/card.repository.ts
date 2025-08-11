@@ -206,24 +206,80 @@ export class CardRepository implements ICardRepository {
     return pipe(
       userCardsResult,
       andThen((allCards) => {
-        let dueCards = allCards.filter((card) => {
-          // Check if card is due
-          return card.scheduling.nextReviewDate <= currentDate;
+        // Split cards into review (have lastReviewDate) and new (no lastReviewDate)
+        let reviewDueCards = allCards.filter(
+          (card) =>
+            card.scheduling.lastReviewDate &&
+            card.scheduling.nextReviewDate <= currentDate,
+        );
+        // New cards: treat cards without a lastReviewDate as due if their scheduled nextReviewDate
+        // is not meaningfully in the future relative to the provided currentDate. We allow a small
+        // grace window to account for the common pattern: const now = new Date(); createCard(); findDue({currentDate: now}).
+        // Without the grace window, the freshly created card's nextReviewDate (captured a few ms later)
+        // might incorrectly exclude it. However, when querying with a date clearly before creation
+        // (e.g. yesterday), we still must not return the card. So we only include new cards whose
+        // nextReviewDate is <= currentDate + GRACE_MS.
+        const NEW_CARD_GRACE_MS = 30_000; // 30s tolerance for race between captured currentDate and creation time
+        let newDueCards = allCards.filter((card) => {
+          if (card.scheduling.lastReviewDate) return false;
+          const diff =
+            card.scheduling.nextReviewDate.getTime() - currentDate.getTime();
+          return diff <= NEW_CARD_GRACE_MS; // negative (past) or within grace window
         });
 
         // Filter by tags if specified
         if (query.tags && query.tags.length > 0) {
-          dueCards = dueCards.filter((card) => {
-            return query.tags!.some((tag) => card.tags.includes(tag));
-          });
+          reviewDueCards = reviewDueCards.filter((card) =>
+            query.tags!.some((tag) => card.tags.includes(tag)),
+          );
+          newDueCards = newDueCards.filter((card) =>
+            query.tags!.some((tag) => card.tags.includes(tag)),
+          );
         }
 
-        // Apply limit if specified
-        if (query.limit && query.limit > 0) {
-          dueCards = dueCards.slice(0, query.limit);
+        // Determine limits
+        const maxReview = query.maxReviewCards ?? query.limit ?? undefined;
+        const maxNew = query.maxNewCards ?? undefined;
+
+        if (maxReview !== undefined) {
+          reviewDueCards = reviewDueCards.slice(0, maxReview);
         }
 
-        return resultSuccess(dueCards as readonly Card[]);
+        // Only introduce new cards after we've exhausted review quota OR there are no review cards due
+        let selectedCards: Card[] = [...reviewDueCards];
+
+        if (
+          (maxReview !== undefined && reviewDueCards.length < maxReview) ||
+          reviewDueCards.length === 0
+        ) {
+          const remainingCapacity =
+            maxReview !== undefined
+              ? Math.max(0, maxReview - reviewDueCards.length)
+              : maxNew !== undefined
+                ? maxNew
+                : newDueCards.length;
+          const newCap = maxNew !== undefined ? maxNew : newDueCards.length;
+          const allowedNew = Math.min(
+            newCap,
+            remainingCapacity,
+            newDueCards.length,
+          );
+          selectedCards = [
+            ...reviewDueCards,
+            ...newDueCards.slice(0, allowedNew),
+          ];
+        }
+
+        // Fallback limit param applies to total if provided and no specific maxReviewCards
+        if (
+          query.limit &&
+          query.limit > 0 &&
+          query.maxReviewCards === undefined
+        ) {
+          selectedCards = selectedCards.slice(0, query.limit);
+        }
+
+        return resultSuccess(selectedCards as readonly Card[]);
       }),
     );
   }

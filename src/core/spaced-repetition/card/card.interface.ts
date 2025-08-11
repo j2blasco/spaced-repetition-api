@@ -38,6 +38,10 @@ export interface DueCardsQuery {
   readonly tags?: readonly string[];
   readonly limit?: number;
   readonly currentDate?: Date;
+  /** Maximum number of new (never reviewed) cards to introduce in this retrieval */
+  readonly maxNewCards?: number;
+  /** Maximum number of review (previously reviewed) cards to return */
+  readonly maxReviewCards?: number;
 }
 
 export interface ICardRepository {

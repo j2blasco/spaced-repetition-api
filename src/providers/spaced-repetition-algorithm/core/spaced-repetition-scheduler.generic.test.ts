@@ -44,6 +44,8 @@ export function testSpacedRepetitionScheduler(
         );
         expect(initialData.algorithmData).toBeDefined();
         expect(typeof initialData.algorithmData).toBe('object');
+  // New cards should have no lastReviewDate
+  expect(initialData.lastReviewDate == null).toBe(true);
       });
 
       it('should create scheduling data compatible with itself', () => {
@@ -204,6 +206,10 @@ export function testSpacedRepetitionScheduler(
         const response = scheduler.reschedule(request);
 
         expect(response.newScheduling.nextReviewDate).toBeDefined();
+        expect(response.newScheduling.lastReviewDate).toBeDefined();
+        expect(response.newScheduling.lastReviewDate?.getTime()).toBe(
+          reviewDate.getTime(),
+        );
       });
 
       it('should set nextReviewDate in the future', () => {

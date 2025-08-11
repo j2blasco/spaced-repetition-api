@@ -30,6 +30,7 @@ export class SM2Scheduler
     return {
       algorithmType: this.algorithmType,
       nextReviewDate,
+      lastReviewDate: null,
       algorithmData: {
         efactor: 2.5, // Default ease factor
         repetition: 0, // New card
@@ -46,6 +47,9 @@ export class SM2Scheduler
     return {
       algorithmType: data.algorithmType,
       nextReviewDate: data.nextReviewDate.toISOString(),
+      lastReviewDate: data.lastReviewDate
+        ? data.lastReviewDate.toISOString()
+        : null,
       algorithmData: {
         efactor: data.algorithmData.efactor,
         repetition: data.algorithmData.repetition,
@@ -67,6 +71,9 @@ export class SM2Scheduler
     return {
       algorithmType: data.algorithmType as AlgorithmType,
       nextReviewDate: new Date(data.nextReviewDate as string),
+      lastReviewDate: data.lastReviewDate
+        ? new Date(data.lastReviewDate as string)
+        : null,
       algorithmData: {
         efactor: algorithmData.efactor,
         repetition: algorithmData.repetition,
@@ -95,6 +102,7 @@ export class SM2Scheduler
     const newScheduling = updateSchedulingWithInterval(
       {
         ...request.currentScheduling,
+        lastReviewDate: request.reviewResult.reviewedAt,
         algorithmData: {
           efactor: updatedItem.efactor,
           repetition: updatedItem.repetition,
