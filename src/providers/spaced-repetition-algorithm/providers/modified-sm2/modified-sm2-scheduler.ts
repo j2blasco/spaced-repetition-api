@@ -33,12 +33,12 @@ export class ModifiedSM2Scheduler
 
   initializeCard(): CardSchedulingData<ModifiedSM2AlgorithmData> {
     const now = new Date();
-    const nextReviewDate = new Date(now.getTime());
+  const nextReviewDate = new Date(now.getTime() + 45 * 1000);
 
     return {
       algorithmType: this.algorithmType,
       nextReviewDate,
-  lastReviewDate: null,
+      lastReviewDate: null,
       algorithmData: {
         efactor: 2.5,
         repetition: 0,
@@ -54,12 +54,7 @@ export class ModifiedSM2Scheduler
     return {
       algorithmType: data.algorithmType,
       nextReviewDate: data.nextReviewDate.toISOString(),
-      lastReviewDate: (data as CardSchedulingData<ModifiedSM2AlgorithmData>)
-        .lastReviewDate
-        ? (
-            data as CardSchedulingData<ModifiedSM2AlgorithmData>
-          ).lastReviewDate!.toISOString()
-        : null,
+      lastReviewDate: data.lastReviewDate ? data.lastReviewDate.toISOString() : null,
       algorithmData: {
         efactor: data.algorithmData.efactor,
         repetition: data.algorithmData.repetition,
@@ -83,9 +78,7 @@ export class ModifiedSM2Scheduler
     return {
       algorithmType: data.algorithmType as AlgorithmType,
       nextReviewDate: new Date(data.nextReviewDate as string),
-      lastReviewDate: data.lastReviewDate
-        ? new Date(data.lastReviewDate as string)
-        : null,
+      lastReviewDate: data.lastReviewDate ? new Date(data.lastReviewDate as string) : null,
       algorithmData: {
         efactor: algorithmData.efactor,
         repetition: algorithmData.repetition,
@@ -126,8 +119,9 @@ export class ModifiedSM2Scheduler
         ...request.currentScheduling,
         // Failed again while already in failed state: schedule 45s in the future
         nextReviewDate: new Date(
-          new Date(request.reviewResult.reviewedAt).getTime() + 45 * 1000,
+          request.reviewResult.reviewedAt.getTime() + 45 * 1000,
         ),
+        lastReviewDate: request.reviewResult.reviewedAt,
         algorithmData: {
           ...currentData,
           isFailed: true,
@@ -150,8 +144,9 @@ export class ModifiedSM2Scheduler
           ...request.currentScheduling,
           // Successful recall while in failed state: schedule 45s in the future until grading occurs
           nextReviewDate: new Date(
-            new Date(request.reviewResult.reviewedAt).getTime() + 45 * 1000,
+            request.reviewResult.reviewedAt.getTime() + 45 * 1000,
           ),
+          lastReviewDate: request.reviewResult.reviewedAt,
           algorithmData: {
             ...currentData,
             isFailed: true,
@@ -176,8 +171,9 @@ export class ModifiedSM2Scheduler
       ...request.currentScheduling,
       // Initial failure: schedule 45s in the future
       nextReviewDate: new Date(
-        new Date(request.reviewResult.reviewedAt).getTime() + 45 * 1000,
+        request.reviewResult.reviewedAt.getTime() + 45 * 1000,
       ),
+      lastReviewDate: request.reviewResult.reviewedAt,
       algorithmData: {
         ...currentData,
         isFailed: true,
@@ -200,6 +196,7 @@ export class ModifiedSM2Scheduler
     const sm2SchedulingData: CardSchedulingData<SM2AlgorithmData> = {
       algorithmType: this.algorithmType,
       nextReviewDate: request.currentScheduling.nextReviewDate,
+      lastReviewDate: request.currentScheduling.lastReviewDate,
       algorithmData: {
         efactor: currentData.efactor,
         repetition: currentData.repetition,
@@ -237,6 +234,7 @@ export class ModifiedSM2Scheduler
     const sm2SchedulingData: CardSchedulingData<SM2AlgorithmData> = {
       algorithmType: this.algorithmType,
       nextReviewDate: request.currentScheduling.nextReviewDate,
+      lastReviewDate: request.currentScheduling.lastReviewDate,
       algorithmData: {
         efactor: currentData.efactor,
         repetition: currentData.repetition,

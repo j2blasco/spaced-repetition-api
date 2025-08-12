@@ -39,9 +39,11 @@ export function testSpacedRepetitionScheduler(
         expect(initialData).toBeDefined();
         expect(calculateInterval(initialData)).toBeGreaterThanOrEqual(0);
         expect(initialData.nextReviewDate).toBeInstanceOf(Date);
-        expect(initialData.nextReviewDate.getTime()).toBeLessThanOrEqual(
-          Date.now(),
-        );
+  const now = Date.now();
+  const time = initialData.nextReviewDate.getTime();
+  // New cards should be scheduled soon (e.g., within ~60s), not in the past
+  expect(time).toBeGreaterThanOrEqual(now);
+  expect(time).toBeLessThanOrEqual(now + 60_000);
         expect(initialData.algorithmData).toBeDefined();
         expect(typeof initialData.algorithmData).toBe('object');
   // New cards should have no lastReviewDate
@@ -55,12 +57,12 @@ export function testSpacedRepetitionScheduler(
         expect(isCompatible).toBe(true);
       });
 
-      it('should schedule new cards for immediate review', () => {
-        const now = new Date();
-        const initialData = scheduler.initializeCard();
-        expect(initialData.nextReviewDate.getTime()).toBeLessThanOrEqual(
-          now.getTime(),
-        );
+      it('should schedule new cards for near-term review (within ~60s)', () => {
+  const now = Date.now();
+  const initialData = scheduler.initializeCard();
+  const time = initialData.nextReviewDate.getTime();
+  expect(time).toBeGreaterThanOrEqual(now);
+  expect(time).toBeLessThanOrEqual(now + 60_000);
       });
     });
 

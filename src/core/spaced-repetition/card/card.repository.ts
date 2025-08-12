@@ -14,8 +14,9 @@ import {
   UpdateCardRequest,
 } from './card.interface';
 import type { UserId } from 'src/core/user/user.interface';
-import { AlgorithmType } from 'src/providers/spaced-repetition-algorithm/core/spaced-repetition-scheduler.interface';
+import { AlgorithmType, RecallLevel } from 'src/providers/spaced-repetition-algorithm/core/spaced-repetition-scheduler.interface';
 import { ISpacedRepetition } from 'src/providers/spaced-repetition-algorithm/core/space-repetition.interface';
+import { generateCardDataHash } from './card-hash.util';
 import {
   Result,
   resultSuccess,
@@ -34,6 +35,7 @@ type CardSerialized = {
   userId: string;
   tags: string[];
   data: JsonObject;
+  dataHash?: string; // Optional for backward compatibility
   scheduling: {
     algorithmType: string;
     nextReviewDate: string;
@@ -55,6 +57,25 @@ export class CardRepository implements ICardRepository {
   async create(
     request: CreateCardRequest,
   ): Promise<Result<Card, ErrorUnknown>> {
+    // Generate data hash
+    const dataHash = generateCardDataHash({
+      userId: request.userId,
+      data: request.data,
+      tags: request.tags,
+    });
+
+    // Check for existing card with same hash
+    try {
+      const existingCardResult = await this.findByDataHash(request.userId, dataHash);
+      const existingCard = existingCardResult.unwrapOrThrow();
+      if (existingCard !== null) {
+        // Review the existing card as failed since user forgot about it
+        return this.reviewCardAsFailed(existingCard);
+      }
+    } catch {
+      // If findByDataHash fails, continue with creation
+    }
+
     const now = new Date();
     const scheduler = this.spacedRepetition.getScheduler(request.algorithmType);
     const defaultScheduling = scheduler.initializeCard();
@@ -68,6 +89,7 @@ export class CardRepository implements ICardRepository {
       userId: request.userId,
       tags: [...(request.tags || [])], // Convert readonly array to mutable
       data: this.convertToJsonObject(request.data),
+      dataHash,
       scheduling: serializedScheduling,
       createdAt: now.toISOString(),
       updatedAt: now.toISOString(),
@@ -84,6 +106,7 @@ export class CardRepository implements ICardRepository {
           userId: request.userId,
           tags: request.tags || [],
           data: request.data,
+          dataHash,
           scheduling: defaultScheduling,
           createdAt: now,
           updatedAt: now,
@@ -107,6 +130,46 @@ export class CardRepository implements ICardRepository {
         }
         const card = this.deserializeCardData(data as CardSerialized, id);
         return resultSuccess(card);
+      }),
+    );
+  }
+
+  async findByDataHash(
+    userId: UserId,
+    dataHash: string,
+  ): Promise<Result<Card | null, ErrorUnknown>> {
+    const collectionPath: CollectionPath = [this.COLLECTION_NAME];
+    const constraints: NoSqlDbQueryConstraint<CardSerialized>[] = [
+      {
+        type: 'where',
+        field: 'userId',
+        operator: '==',
+        value: userId,
+      },
+      {
+        type: 'where',
+        field: 'dataHash',
+        operator: '==',
+        value: dataHash,
+      },
+    ];
+
+    const result = await this.db.readCollection({
+      path: collectionPath,
+      constraints,
+    });
+
+    return pipe(
+      result,
+      catchError(() => {
+        return resultSuccess(null as Card | null);
+      }),
+      andThen((data) => {
+        if (Array.isArray(data) && data.length > 0) {
+          const card = this.deserializeCardData(data[0].data, data[0].id);
+          return resultSuccess(card as Card | null);
+        }
+        return resultSuccess(null as Card | null);
       }),
     );
   }
@@ -304,6 +367,29 @@ export class CardRepository implements ICardRepository {
             : existingCard.scheduling;
         const now = new Date();
 
+        // Regenerate dataHash if data or tags changed
+        const dataHash = (request.data !== undefined || request.tags !== undefined)
+          ? generateCardDataHash({
+              userId: existingCard.userId,
+              data: updatedData,
+              tags: updatedTags,
+            })
+          : existingCard.dataHash;
+
+        // Check for duplicate if hash changed
+        if (dataHash !== existingCard.dataHash) {
+          try {
+            const duplicateResult = await this.findByDataHash(existingCard.userId, dataHash);
+            const duplicateCard = duplicateResult.unwrapOrThrow();
+            if (duplicateCard !== null && duplicateCard.id !== id) {
+              // Review the duplicate card as failed and return it instead
+              return this.reviewCardAsFailed(duplicateCard);
+            }
+          } catch {
+            // If findByDataHash fails, continue with update
+          }
+        }
+
         // Use the scheduler to serialize the scheduling data
         const scheduler = this.spacedRepetition.getScheduler(
           updatedScheduling.algorithmType,
@@ -315,6 +401,7 @@ export class CardRepository implements ICardRepository {
           userId: existingCard.userId,
           tags: [...updatedTags],
           data: this.convertToJsonObject(updatedData),
+          dataHash,
           scheduling: serializedScheduling,
           createdAt: existingCard.createdAt.toISOString(),
           updatedAt: now.toISOString(),
@@ -331,6 +418,7 @@ export class CardRepository implements ICardRepository {
               userId: existingCard.userId,
               tags: updatedTags,
               data: updatedData,
+              dataHash,
               scheduling: updatedScheduling,
               createdAt: existingCard.createdAt,
               updatedAt: now,
@@ -378,11 +466,19 @@ export class CardRepository implements ICardRepository {
     const scheduling =
       scheduler.deserializeSchedulingData(schedulingJsonObject);
 
+    // Generate dataHash if missing (for backward compatibility)
+    const dataHash = dbData.dataHash || generateCardDataHash({
+      userId: dbData.userId || '',
+      data: (dbData.data as Record<string, unknown>) || {},
+      tags: Array.isArray(dbData.tags) ? dbData.tags : [],
+    });
+
     return {
       id,
       userId: dbData.userId || '',
       tags: Array.isArray(dbData.tags) ? dbData.tags : [],
       data: (dbData.data as Record<string, unknown>) || {},
+      dataHash,
       scheduling,
       createdAt: new Date(dbData.createdAt || new Date()),
       updatedAt: new Date(dbData.updatedAt || new Date()),
@@ -446,5 +542,22 @@ export class CardRepository implements ICardRepository {
       'code' in error &&
       error.code === 'not-found'
     );
+  }
+
+  private async reviewCardAsFailed(card: Card): Promise<Result<Card, ErrorUnknown>> {
+    const scheduler = this.spacedRepetition.getScheduler(card.scheduling.algorithmType);
+    
+    const reviewDate = new Date();
+    const reviewResult = scheduler.reschedule({
+      currentScheduling: card.scheduling,
+      reviewResult: {
+        recallLevel: RecallLevel.HARD,
+        reviewedAt: reviewDate,
+      },
+    });
+
+    return this.update(card.id, {
+      scheduling: reviewResult.newScheduling,
+    });
   }
 }

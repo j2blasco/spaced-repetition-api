@@ -24,8 +24,8 @@ export class SM2Scheduler
    */
   initializeCard(): CardSchedulingData<SM2AlgorithmData> {
     const now = new Date();
-    // New cards should be immediately available for their first review
-    const nextReviewDate = new Date(now.getTime());
+  // New cards should become due 45 seconds after creation
+  const nextReviewDate = new Date(now.getTime() + 45 * 1000);
 
     return {
       algorithmType: this.algorithmType,
@@ -47,9 +47,7 @@ export class SM2Scheduler
     return {
       algorithmType: data.algorithmType,
       nextReviewDate: data.nextReviewDate.toISOString(),
-      lastReviewDate: data.lastReviewDate
-        ? data.lastReviewDate.toISOString()
-        : null,
+      lastReviewDate: data.lastReviewDate ? data.lastReviewDate.toISOString() : null,
       algorithmData: {
         efactor: data.algorithmData.efactor,
         repetition: data.algorithmData.repetition,
@@ -71,9 +69,7 @@ export class SM2Scheduler
     return {
       algorithmType: data.algorithmType as AlgorithmType,
       nextReviewDate: new Date(data.nextReviewDate as string),
-      lastReviewDate: data.lastReviewDate
-        ? new Date(data.lastReviewDate as string)
-        : null,
+      lastReviewDate: data.lastReviewDate ? new Date(data.lastReviewDate as string) : null,
       algorithmData: {
         efactor: algorithmData.efactor,
         repetition: algorithmData.repetition,
@@ -87,6 +83,7 @@ export class SM2Scheduler
   reschedule(
     request: RescheduleRequest<SM2AlgorithmData>,
   ): RescheduleResponse<SM2AlgorithmData> {
+    
     const grade = this.mapRecallLevelToGrade(request.reviewResult.recallLevel);
     const currentData = request.currentScheduling.algorithmData;
 

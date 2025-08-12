@@ -4,6 +4,7 @@ import {
   UpdateCardRequest,
   DueCardsQuery,
 } from 'src/core/spaced-repetition/card/card.interface';
+import { generateCardDataHash } from 'src/core/spaced-repetition/card/card-hash.util';
 import {
   AlgorithmType,
   RecallLevel,
@@ -72,9 +73,33 @@ async function handleCreateCard(req: Request, res: Response) {
 
   const cardRepo = getCardRepository();
   const result = await cardRepo.create(createRequest);
-  const card = result.unwrapOrThrow();
 
-  res.status(201).json(card);
+  pipe(
+    result,
+    andThen((card) => {
+      // Check if this card has been reviewed as failed (indicating it was a duplicate)
+      const wasReviewed = card.scheduling.lastReviewDate !== null;
+      const statusCode = wasReviewed ? 200 : 201;
+      
+      res.status(statusCode).json({
+        ...card,
+        wasExistingCard: wasReviewed,
+        message: wasReviewed 
+          ? 'Existing card found and reviewed as failed' 
+          : 'New card created successfully'
+      });
+      return resultSuccessVoid();
+    }),
+    catchError((error) => {
+      res.status(500).json({
+        error: {
+          code: 'INTERNAL_ERROR',
+          message: 'Failed to create or review card',
+        },
+      });
+      return resultSuccessVoid();
+    }),
+  );
 }
 
 async function handleGetCard(req: Request, res: Response) {
@@ -233,6 +258,61 @@ async function handleGetDueCards(req: Request, res: Response) {
   );
 }
 
+async function handleCheckCardExists(req: Request, res: Response) {
+  const userId = req.query.userId as string;
+  const data = req.body.data;
+  const tags = req.body.tags;
+
+  if (!userId || !data) {
+    res.status(400).json({
+      error: {
+        code: 'VALIDATION_ERROR',
+        message: 'userId and data are required',
+      },
+    });
+    return;
+  }
+
+  const dataHash = generateCardDataHash({
+    userId,
+    data,
+    tags,
+  });
+
+  const cardRepo = getCardRepository();
+  const result = await cardRepo.findByDataHash(userId, dataHash);
+
+  pipe(
+    result,
+    andThen((card) => {
+      if (card) {
+        res.json({
+          exists: true,
+          card,
+          dataHash,
+          message: 'Card exists. Creating a duplicate will review this card as failed.',
+        });
+      } else {
+        res.json({
+          exists: false,
+          dataHash,
+          message: 'Card does not exist. A new card will be created.',
+        });
+      }
+      return resultSuccessVoid();
+    }),
+    catchError((error) => {
+      res.status(500).json({
+        error: {
+          code: 'INTERNAL_ERROR',
+          message: 'Failed to check card existence',
+        },
+      });
+      return resultSuccessVoid();
+    }),
+  );
+}
+
 async function handleReviewCard(req: Request, res: Response) {
   const cardId = req.params.id;
   const reviewResponse = req.body.response as ReviewResponse;
@@ -330,6 +410,14 @@ async function handleReviewCard(req: Request, res: Response) {
 }
 
 export function setupCardsEndpoints(app: Express) {
+  app.post(`${cardsEndpointRoute}/check-exists`, (req: Request, res: Response) => {
+    try {
+      handleCheckCardExists(req, res);
+    } catch (error) {
+      console.error(`Error in ${cardsEndpointRoute}/check-exists`, error);
+    }
+  });
+
   app.get(`${cardsEndpointRoute}/due`, (req: Request, res: Response) => {
     try {
       handleGetDueCards(req, res);

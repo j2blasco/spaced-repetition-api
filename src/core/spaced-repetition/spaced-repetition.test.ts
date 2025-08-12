@@ -74,17 +74,28 @@ describe('Spaced Repetition System - Full User Story', () => {
       createdCards.push(cardResult.unwrapOrThrow());
     }
 
-    // 3. Verify initial state - new cards should be immediately available for review
+    // 3. Verify initial state - new cards should NOT be due until 45s after creation
     const initialDueCardsResult = await cardRepo.findDueCards({
       userId: user.id,
       currentDate: startDate,
     });
     expect(() => initialDueCardsResult.unwrapOrThrow()).not.toThrow();
     const initialDueCards = initialDueCardsResult.unwrapOrThrow();
-    expect(initialDueCards).toHaveLength(3); // All new cards should be immediately due
+    expect(initialDueCards).toHaveLength(0); // No cards due yet
+
+    // Advance time by 46 seconds and verify they are now due
+    const dueCheckTime = new Date(startDate.getTime() + 46_000);
+    vi.setSystemTime(dueCheckTime);
+    const dueAfterDelayResult = await cardRepo.findDueCards({
+      userId: user.id,
+      currentDate: dueCheckTime,
+    });
+    expect(() => dueAfterDelayResult.unwrapOrThrow()).not.toThrow();
+    const dueAfterDelay = dueAfterDelayResult.unwrapOrThrow();
+    expect(dueAfterDelay).toHaveLength(3);
 
     // 4. Review the first card to test rescheduling
-    const firstCard = initialDueCards[0];
+  const firstCard = dueAfterDelay[0];
     const scheduler = spacedRepetition.getScheduler(
       firstCard.scheduling.algorithmType,
     );
@@ -94,7 +105,7 @@ describe('Spaced Repetition System - Full User Story', () => {
       currentScheduling: firstCard.scheduling,
       reviewResult: {
         recallLevel: RecallLevel.MEDIUM, // 'good'
-        reviewedAt: startDate,
+  reviewedAt: dueCheckTime,
       },
     });
 
@@ -108,7 +119,7 @@ describe('Spaced Repetition System - Full User Story', () => {
       currentScheduling: firstCard.scheduling,
       reviewResult: {
         recallLevel: RecallLevel.HARD, // 'failed'
-        reviewedAt: startDate,
+  reviewedAt: dueCheckTime,
       },
     });
 
@@ -122,7 +133,7 @@ describe('Spaced Repetition System - Full User Story', () => {
     const spanishGreetingsResult = await cardRepo.findDueCards({
       userId: user.id,
       tags: ['greetings'],
-      currentDate: startDate,
+      currentDate: dueCheckTime,
     });
     expect(() => spanishGreetingsResult.unwrapOrThrow()).not.toThrow();
     const spanishGreetings = spanishGreetingsResult.unwrapOrThrow();

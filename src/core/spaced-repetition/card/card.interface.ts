@@ -15,6 +15,7 @@ export type Card = {
   readonly userId: UserId;
   readonly tags: readonly string[];
   readonly data: Record<string, unknown>;
+  readonly dataHash: string;
   readonly scheduling: CardSchedulingData;
   readonly createdAt: Date;
   readonly updatedAt: Date;
@@ -56,6 +57,14 @@ export interface ICardRepository {
   findById(
     id: string,
   ): Promise<Result<Card, ErrorWithCode<'not-found'> | ErrorUnknown>>;
+
+  /**
+   * Find a card by its data hash
+   */
+  findByDataHash(
+    userId: UserId,
+    dataHash: string,
+  ): Promise<Result<Card | null, ErrorUnknown>>;
 
   /**
    * Find all cards for a user

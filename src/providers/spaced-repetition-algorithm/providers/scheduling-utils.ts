@@ -69,6 +69,6 @@ export function updateSchedulingWithInterval<TAlgorithmData>(
   return {
     ...schedulingData,
     nextReviewDate,
-  lastReviewDate: reviewDate,
+    lastReviewDate: reviewDate,
   };
 }

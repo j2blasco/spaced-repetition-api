@@ -141,11 +141,13 @@ describe('SpacedRepetitionClient Integration Tests', () => {
       expect(updatedCard.updatedAt).not.toBe(updatedCard.createdAt);
     });
 
-    it('should get due cards', async () => {
-      // New cards should be immediately available for review
+    it('should get due cards (after 45 seconds delay for new cards)', async () => {
+      // New cards are not due immediately; query with currentDate > 45s in future
+      const future = new Date(Date.now() + 46_000).toISOString();
       const dueCards = await client.getDueCards({
         userId,
         limit: 10,
+        currentDate: future,
       });
 
       expect(dueCards).toBeDefined();
@@ -153,11 +155,13 @@ describe('SpacedRepetitionClient Integration Tests', () => {
       expect(dueCards.some((card) => card.id === cardId)).toBe(true);
     });
 
-    it('should get due cards with tags filter', async () => {
+    it('should get due cards with tags filter (after delay)', async () => {
+      const future = new Date(Date.now() + 46_000).toISOString();
       const dueCards = await client.getDueCards({
         userId,
         tags: ['geography'],
         limit: 10,
+        currentDate: future,
       });
 
       expect(dueCards).toBeDefined();
@@ -284,7 +288,7 @@ describe('SpacedRepetitionClient Integration Tests', () => {
       ); // More than 23 hours
     });
 
-    it('should create and complete a study session', async () => {
+  it('should create and complete a study session (cards due after delay)', async () => {
       // Create additional cards for study session
       const sessionCard = await client.createCard({
         userId,
@@ -298,6 +302,7 @@ describe('SpacedRepetitionClient Integration Tests', () => {
       const studySession = await client.createStudySession(userId, {
         tags: ['session-test'],
         limit: 5,
+        currentDate: new Date(Date.now() + 46_000),
       });
 
       expect(studySession).toBeDefined();
@@ -376,13 +381,22 @@ describe('SpacedRepetitionClient Integration Tests', () => {
         algorithmType: 'sm2',
       });
 
-      // Verify the new card is immediately due
+      // Verify the new card is not immediately due
       const initialDueCards = await client.getDueCards({
         userId,
         tags: ['scheduling-test'],
         limit: 10,
       });
-      expect(initialDueCards.some((c) => c.id === card.id)).toBe(true);
+      expect(initialDueCards.some((c) => c.id === card.id)).toBe(false);
+
+      // But it should appear after 45 seconds
+      const dueAfterDelay = await client.getDueCards({
+        userId,
+        tags: ['scheduling-test'],
+        limit: 10,
+        currentDate: new Date(Date.now() + 46_000).toISOString(),
+      });
+      expect(dueAfterDelay.some((c) => c.id === card.id)).toBe(true);
 
       // Review the card with a 'good' response to reschedule it
       const reviewResponse = await client.reviewCard(card.id, {

@@ -276,5 +276,32 @@ describe('Card endpoints', () => {
         'userId query parameter is required',
       );
     });
+
+    it('should not return a newly added card in due list until 45 seconds pass', async () => {
+      await using testbed = await RestServerTestbed.create({
+        intialPort: 4001,
+      });
+      const app = testbed.app;
+
+      const testUserId = await createTestUser(app);
+      const card = await createTestCard(app, testUserId);
+
+      // Immediately query due cards: should NOT include the new card
+      const nowDue = await request(app)
+        .get(`${cardsEndpointRoute}/due`)
+        .query({ userId: testUserId })
+        .expect(200);
+      const nowDueCards = nowDue.body as Array<{ id: string }>;
+      expect(nowDueCards.some((c) => c.id === card.id)).toBe(false);
+
+      // Query with currentDate 46s in the future: should include the card
+      const future = new Date(Date.now() + 46_000).toISOString();
+      const futureDue = await request(app)
+        .get(`${cardsEndpointRoute}/due`)
+        .query({ userId: testUserId, currentDate: future })
+        .expect(200);
+      const futureDueCards = futureDue.body as Array<{ id: string }>;
+      expect(futureDueCards.some((c) => c.id === card.id)).toBe(true);
+    });
   });
 });
