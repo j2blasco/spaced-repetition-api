@@ -23,11 +23,12 @@ describe('Card endpoints', () => {
   };
 
   const createTestCard = async (app: Express, userId: string) => {
+    const uniqueId = Math.random().toString(36).substring(7);
     const cardData = {
       userId,
       tags: ['vocabulary', 'spanish'],
       data: {
-        front: '¿Cómo estás?',
+        front: `¿Cómo estás? ${uniqueId}`,
         back: 'How are you?',
         extra: 'Common greeting in Spanish',
       },

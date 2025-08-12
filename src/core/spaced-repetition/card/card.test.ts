@@ -482,6 +482,9 @@ describe('Card Duplicate Detection', () => {
     expect(firstCard.dataHash).toBeDefined();
     expect(firstCard.scheduling.lastReviewDate).toBeNull(); // New card not reviewed yet
 
+    // Add small delay to ensure different timestamp for review
+    await new Promise(resolve => setTimeout(resolve, 10));
+
     // Attempt to create duplicate card - should review existing card as failed
     const duplicateCardResult = await repository.create({
       userId,
