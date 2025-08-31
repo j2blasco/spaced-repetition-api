@@ -14,7 +14,10 @@ import {
   UpdateCardRequest,
 } from './card.interface';
 import type { UserId } from 'src/core/user/user.interface';
-import { AlgorithmType, RecallLevel } from 'src/providers/spaced-repetition-algorithm/core/spaced-repetition-scheduler.interface';
+import {
+  AlgorithmType,
+  RecallLevel,
+} from 'src/providers/spaced-repetition-algorithm/core/spaced-repetition-scheduler.interface';
 import { ISpacedRepetition } from 'src/providers/spaced-repetition-algorithm/core/space-repetition.interface';
 import { generateCardDataHash } from './card-hash.util';
 import {
@@ -66,7 +69,10 @@ export class CardRepository implements ICardRepository {
 
     // Check for existing card with same hash
     try {
-      const existingCardResult = await this.findByDataHash(request.userId, dataHash);
+      const existingCardResult = await this.findByDataHash(
+        request.userId,
+        dataHash,
+      );
       const existingCard = existingCardResult.unwrapOrThrow();
       if (existingCard !== null) {
         // Review the existing card as failed since user forgot about it
@@ -368,18 +374,22 @@ export class CardRepository implements ICardRepository {
         const now = new Date();
 
         // Regenerate dataHash if data or tags changed
-        const dataHash = (request.data !== undefined || request.tags !== undefined)
-          ? generateCardDataHash({
-              userId: existingCard.userId,
-              data: updatedData,
-              tags: updatedTags,
-            })
-          : existingCard.dataHash;
+        const dataHash =
+          request.data !== undefined || request.tags !== undefined
+            ? generateCardDataHash({
+                userId: existingCard.userId,
+                data: updatedData,
+                tags: updatedTags,
+              })
+            : existingCard.dataHash;
 
         // Check for duplicate if hash changed
         if (dataHash !== existingCard.dataHash) {
           try {
-            const duplicateResult = await this.findByDataHash(existingCard.userId, dataHash);
+            const duplicateResult = await this.findByDataHash(
+              existingCard.userId,
+              dataHash,
+            );
             const duplicateCard = duplicateResult.unwrapOrThrow();
             if (duplicateCard !== null && duplicateCard.id !== id) {
               // Review the duplicate card as failed and return it instead
@@ -467,11 +477,13 @@ export class CardRepository implements ICardRepository {
       scheduler.deserializeSchedulingData(schedulingJsonObject);
 
     // Generate dataHash if missing (for backward compatibility)
-    const dataHash = dbData.dataHash || generateCardDataHash({
-      userId: dbData.userId || '',
-      data: (dbData.data as Record<string, unknown>) || {},
-      tags: Array.isArray(dbData.tags) ? dbData.tags : [],
-    });
+    const dataHash =
+      dbData.dataHash ||
+      generateCardDataHash({
+        userId: dbData.userId || '',
+        data: (dbData.data as Record<string, unknown>) || {},
+        tags: Array.isArray(dbData.tags) ? dbData.tags : [],
+      });
 
     return {
       id,
@@ -544,8 +556,12 @@ export class CardRepository implements ICardRepository {
     );
   }
 
-  private async reviewCardAsFailed(card: Card): Promise<Result<Card, ErrorUnknown>> {
-    const scheduler = this.spacedRepetition.getScheduler(card.scheduling.algorithmType);
+  private async reviewCardAsFailed(
+    card: Card,
+  ): Promise<Result<Card, ErrorUnknown>> {
+    const scheduler = this.spacedRepetition.getScheduler(
+      card.scheduling.algorithmType,
+    );
     
     const reviewDate = new Date();
     const reviewResult = scheduler.reschedule({
@@ -556,8 +572,13 @@ export class CardRepository implements ICardRepository {
       },
     });
 
-    return this.update(card.id, {
+    const updateResult = await this.update(card.id, {
       scheduling: reviewResult.newScheduling,
     });
+    // Map not-found to unknown to satisfy return type
+    return pipe(
+      updateResult,
+      catchError(() => resultError.unknown('not-found')),
+    );
   }
 }

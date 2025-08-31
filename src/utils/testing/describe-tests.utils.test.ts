@@ -59,7 +59,7 @@ export function fdescribeTest(
     return;
   }
   configureTestTimeout(type);
-  fdescribe(title, callback);
+  describe.only(title, callback);
 }
 
 export function xdescribeTest(

@@ -5,7 +5,9 @@
     "module": "ESNext",
     "esModuleInterop": true,
     "strict": true,
-    "moduleResolution": "node",
+  "moduleResolution": "bundler",
+  "skipLibCheck": true,
+  "types": ["vitest/globals"],
     "sourceMap": true,
     "outDir": "./dist",
     "baseUrl": "./",
@@ -14,5 +16,5 @@
     }
   },
   "include": ["src/**/*.ts"],
-  "exclude": ["dist"]
+  "exclude": ["dist", "src/**/*.spec.ts"]
 }
