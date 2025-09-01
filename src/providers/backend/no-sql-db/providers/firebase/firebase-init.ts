@@ -1,4 +1,10 @@
-import * as admin from 'firebase-admin';
+import {
+  type App,
+  cert,
+  getApp,
+  getApps,
+  initializeApp,
+} from 'firebase-admin/app';
 
 export type InitFirebaseAdminArgs = {
   apiKey: string;
@@ -7,13 +13,24 @@ export type InitFirebaseAdminArgs = {
   storageBucket: string;
 };
 
-const initializedApps: Map<string, admin.app.App> = new Map();
+const initializedApps: Map<string, App> = new Map();
 
-export function getFirebaseAdminApp(): admin.app.App {
+export function getFirebaseAdminApp(): App {
   const projectId = 'spaced-repetition-62f13';
-  const app = admin.initializeApp(
+  // Reuse if already initialized
+  if (initializedApps.has(projectId)) {
+    return initializedApps.get(projectId)!;
+  }
+
+  const existingApp = getApps().find((a) => a.name === projectId);
+  if (existingApp) {
+    initializedApps.set(projectId, existingApp);
+    return existingApp;
+  }
+
+  const app = initializeApp(
     {
-      credential: admin.credential.cert({
+      credential: cert({
         projectId: 'spaced-repetition-62f13',
         clientEmail:
           'firebase-adminsdk-fbsvc@spaced-repetition-62f13.iam.gserviceaccount.com',
@@ -23,9 +40,6 @@ export function getFirebaseAdminApp(): admin.app.App {
     },
     projectId,
   );
-  app.firestore().settings({
-    ignoreUndefinedProperties: true,
-  });
 
   initializedApps.set(projectId, app);
   return app;

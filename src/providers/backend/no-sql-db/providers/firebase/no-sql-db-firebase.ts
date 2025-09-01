@@ -21,6 +21,7 @@ import {
   Firestore,
   Query,
   WithFieldValue,
+  getFirestore,
 } from 'firebase-admin/firestore';
 
 function exhaustiveCheck(_value: never) {
@@ -47,7 +48,8 @@ export class NoSqlDatabaseFirebase implements INoSqlDatabase {
 
   constructor() {
     const adminApp = getFirebaseAdminApp();
-    this.db = adminApp.firestore();
+    this.db = getFirestore(adminApp);
+    this.db.settings({ ignoreUndefinedProperties: true });
   }
 
   public readonly onBackup$ = new Subject<void>();
