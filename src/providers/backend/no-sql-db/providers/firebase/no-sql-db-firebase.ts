@@ -15,7 +15,7 @@ import {
   ErrorUnknown,
 } from '@j2blasco/ts-result';
 import { Subject } from 'rxjs';
-import { getFirebaseAdminApp, InitFirebaseAdminArgs } from './firebase-init';
+import { getFirebaseAdminApp } from './firebase-init';
 import {
   DocumentData,
   Firestore,
@@ -27,10 +27,8 @@ function exhaustiveCheck(_value: never) {
   console.error('exhaustiveCheck failed with value:', _value);
 }
 
-export function createNoSqlDatabaseFirebase(
-  args: InitFirebaseAdminArgs,
-): INoSqlDatabase {
-  return new NoSqlDatabaseFirebase(args);
+export function createNoSqlDatabaseFirebase(): INoSqlDatabase {
+  return new NoSqlDatabaseFirebase();
 }
 
 export class NoSqlDatabaseFirebase implements INoSqlDatabase {
@@ -47,12 +45,9 @@ export class NoSqlDatabaseFirebase implements INoSqlDatabase {
 
   private readonly db: Firestore;
 
-  private readonly projectId: string;
-
-  constructor(args: InitFirebaseAdminArgs) {
-    const adminApp = getFirebaseAdminApp(args);
+  constructor() {
+    const adminApp = getFirebaseAdminApp();
     this.db = adminApp.firestore();
-    this.projectId = args.projectId;
   }
 
   public readonly onBackup$ = new Subject<void>();
